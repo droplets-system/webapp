@@ -21,8 +21,8 @@ export * as TokenContract from './contracts/drops';
 import { Contract as DropContract } from './contracts/drops';
 export * as DropContract from './contracts/drops';
 
-import { Contract as OracleContract } from './contracts/oracle.drops';
-export * as OracleContract from './contracts/oracle.drops';
+import { Contract as EpochContract } from './contracts/epoch.drops';
+export * as EpochContract from './contracts/epoch.drops';
 
 export const chain = Chains[PUBLIC_CHAIN_NAME];
 if (!chain) {
@@ -50,7 +50,7 @@ export const contractKit = new ContractKit({
 export const systemContract = new SystemContract({ client });
 export const tokenContract = new TokenContract({ client });
 export const dropsContract: DropContract = new DropContract({ client });
-export const oracleContract: OracleContract = new OracleContract({ client });
+export const epochContract: EpochContract = new EpochContract({ client });
 
 export const sessionKit = new SessionKit(
 	{

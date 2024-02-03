@@ -1,5 +1,5 @@
 import { type Writable, writable, derived, type Readable, readable, get } from 'svelte/store';
-import { oracleContract, dropsContract } from './wharf';
+import { epochContract, dropsContract } from './wharf';
 import type { Checksum256, UInt64 } from '@wharfkit/session';
 
 export const epochNumber: Writable<UInt64> = writable();
@@ -88,7 +88,7 @@ lastEpochRevealed.subscribe((revealed: boolean) => {
 	if (!revealed) {
 		const interval = setInterval(() => {
 			if (!get(epochWaitingAdvance)) {
-				oracleContract
+				epochContract
 					.table('epoch')
 					.get(get(lastEpoch))
 					.then((epoch) => {
@@ -108,7 +108,7 @@ lastEpochRevealed.subscribe((revealed: boolean) => {
 export const lastEpochRevealer = readable(lastEpochRevealed, function start(set) {
 	const interval = setInterval(() => {
 		if (!lastEpochRevealed) {
-			oracleContract
+			epochContract
 				.table('epoch')
 				.get(get(lastEpoch))
 				.then((epoch) => {

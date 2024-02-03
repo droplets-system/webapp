@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { t } from '$lib/i18n';
-	import { OracleContract, oracleContract } from '$lib/wharf';
+	import { EpochContract, epochContract } from '$lib/wharf';
 	import type { Name, UInt64 } from '@wharfkit/session';
 	import { onDestroy, onMount } from 'svelte';
 	import { type Writable, writable, derived, type Readable } from 'svelte/store';
@@ -21,9 +21,9 @@
 		loadReveals();
 	}
 
-	const epochs: Writable<OracleContract.Types.epoch_row[]> = writable();
+	const epochs: Writable<EpochContract.Types.epoch_row[]> = writable();
 	async function loadEpochs() {
-		const rows = await oracleContract.table('epoch').all();
+		const rows = await epochContract.table('epoch').all();
 		if (rows.length == 0) {
 			epochs.set([]);
 			return;
@@ -31,9 +31,9 @@
 		epochs.set(rows);
 	}
 
-	const commits: Writable<OracleContract.Types.commit_row[]> = writable();
+	const commits: Writable<EpochContract.Types.commit_row[]> = writable();
 	async function loadCommits() {
-		const rows = await oracleContract.table('commit').all();
+		const rows = await epochContract.table('commit').all();
 		if (rows.length == 0) {
 			commits.set([]);
 			return;
@@ -41,9 +41,9 @@
 		commits.set(rows);
 	}
 
-	const reveals: Writable<OracleContract.Types.reveal_row[]> = writable();
+	const reveals: Writable<EpochContract.Types.reveal_row[]> = writable();
 	async function loadReveals() {
-		const rows = await oracleContract.table('reveal').all();
+		const rows = await epochContract.table('reveal').all();
 		if (rows.length == 0) {
 			reveals.set([]);
 			return;
