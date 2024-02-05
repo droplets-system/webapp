@@ -17,7 +17,7 @@ export const epochRemaining = readable(epochEnd, function start(set) {
 			epochWaitingAdvance.set(true);
 			lastEpochRevealed.set(false);
 			lastEpochDrop.set(undefined);
-			loadEpoch();
+			// loadEpoch();
 		}
 		set(r);
 	}, 1000);

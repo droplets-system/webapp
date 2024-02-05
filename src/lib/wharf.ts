@@ -18,8 +18,8 @@ export * as SystemContract from './contracts/drops';
 import { Contract as TokenContract } from './contracts/eosio-token';
 export * as TokenContract from './contracts/drops';
 
-import { Contract as DropContract } from './contracts/drops';
-export * as DropContract from './contracts/drops';
+import { Contract as DropsContract } from './contracts/drops';
+export * as DropsContract from './contracts/drops';
 
 import { Contract as EpochContract } from './contracts/epoch.drops';
 export * as EpochContract from './contracts/epoch.drops';
@@ -49,7 +49,7 @@ export const contractKit = new ContractKit({
 
 export const systemContract = new SystemContract({ client });
 export const tokenContract = new TokenContract({ client });
-export const dropsContract: DropContract = new DropContract({ client });
+export const dropsContract: DropsContract = new DropsContract({ client });
 export const epochContract: EpochContract = new EpochContract({ client });
 
 export const sessionKit = new SessionKit(

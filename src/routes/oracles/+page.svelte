@@ -16,7 +16,7 @@
 	});
 
 	function loadData() {
-		loadEpochs();
+		// loadEpochs();
 		loadCommits();
 		loadReveals();
 	}

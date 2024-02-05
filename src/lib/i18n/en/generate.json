@@ -1,5 +1,6 @@
 {
 	"costbreakdown": "Cost Breakdown",
+	"enteramount": "Enter the amount to generate",
 	"generatedropsepoch": "{{itemnames}} generated in epoch {{epoch}}",
 	"generateitemnamesepoch": "{{itemnames}} in epoch",
 	"headereos": "Use EOS tokens to purchase RAM from the blockchain and generate unbound {{itemnames}}.",

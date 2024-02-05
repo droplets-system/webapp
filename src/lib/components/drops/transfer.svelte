@@ -4,10 +4,10 @@
 	import { type TransactResult, Name } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropContract, session, dropsContract } from '$lib/wharf';
+	import { DropsContract, session, dropsContract } from '$lib/wharf';
 
 	const transferring = writable(false);
-	export let drops: Writable<DropContract.Types.drop_row[]> = writable([]);
+	export let drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean> = writable(false);
 

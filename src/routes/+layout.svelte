@@ -13,20 +13,6 @@
 	const drawerStore = getDrawerStore();
 
 	import Navigation from '$lib/components/navigation/navigation.svelte';
-	import {
-		loadEpoch,
-		epochNumber,
-		epochRemainingHours,
-		epochRemainingMinutes,
-		epochRemainingSeconds,
-		epochWaitingAdvance,
-		formatClockValue
-	} from '$lib/epoch';
-
-	const handleChange = ({ currentTarget }) => {
-		const { value } = currentTarget;
-		document.cookie = `lang=${value};`;
-	};
 
 	function getLanguage(name: string) {
 		const value = document.cookie;
@@ -44,7 +30,6 @@
 	onMount(async () => {
 		setLocale(getLanguage('lang'));
 		restore();
-		loadEpoch();
 	});
 
 	function drawerOpen(): void {
@@ -79,21 +64,6 @@
 					</button>
 				</div>
 			</svelte:fragment>
-			<span class="text-center">
-				{#if $epochNumber}
-					<p>Epoch: {$epochNumber}</p>
-					<span class="text-sm">
-						{#if $epochWaitingAdvance}
-							{$t('common.readytoadvance')}
-						{:else}
-							<span class="hidden sm:inline-block">{$t('common.epochend')}:</span>
-							{formatClockValue($epochRemainingHours)}:{formatClockValue(
-								$epochRemainingMinutes
-							)}:{formatClockValue($epochRemainingSeconds)}
-						{/if}
-					</span>
-				{/if}
-			</span>
 			<svelte:fragment slot="trail">
 				{#if $session}
 					{$session.actor}

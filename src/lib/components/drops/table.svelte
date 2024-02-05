@@ -5,9 +5,9 @@
 	import { Bytes } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropContract } from '$lib/wharf';
+	import { DropsContract } from '$lib/wharf';
 
-	export let drops: Writable<DropContract.Types.drop_row[]>;
+	export let drops: Writable<DropsContract.Types.drop_row[]>;
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean>;
 
@@ -106,7 +106,7 @@
 				</th>
 				<th class="text-center">{$t('common.bound')}</th>
 				<th>{$t('common.itemname')}</th>
-				<th class="text-center">{$t('common.epoch')}</th>
+				<th class="text-center">{$t('common.date')}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -134,8 +134,7 @@
 						<p class="text-xs font-mono">{drop.seed}</p>
 					</td>
 					<td class="text-center">
-						<p class="text-lg">{drop.epoch}</p>
-						<p class="text-xs">{drop.created}</p>
+						{drop.created}
 					</td>
 				</tr>
 			{/each}

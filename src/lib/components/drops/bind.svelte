@@ -4,11 +4,11 @@
 	import { Asset, Serializer, type TransactResult } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropContract, session, dropsContract } from '$lib/wharf';
+	import { DropsContract, session, dropsContract } from '$lib/wharf';
 	import { sizeDropRow } from '$lib/constants';
 
 	const binding = writable(false);
-	export let drops: Writable<DropContract.Types.drop_row[]> = writable([]);
+	export let drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
 	export let dropsPrice: Writable<number> = writable(0);
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean> = writable(false);
@@ -76,7 +76,7 @@
 					try {
 						const data = Serializer.decode({
 							data: returnValue.hex,
-							type: DropContract.Types.bind_return_value
+							type: DropsContract.Types.bind_return_value
 						});
 
 						if (Number(data.ram_sold.value) > 0) {

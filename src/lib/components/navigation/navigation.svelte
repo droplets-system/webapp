@@ -44,7 +44,7 @@
 				<Generate format="h4" size={6} />
 			</a>
 		</li>
-		<li>
+		<!-- <li>
 			<a href="/oracles" on:click={drawerClose}>
 				<div class={`h4 flex items-center`}>
 					<VenetianMask class={`dark:text-pink-400 inline size-6 mr-4`} />
@@ -55,7 +55,7 @@
 					</span>
 				</div>
 			</a>
-		</li>
+		</li> -->
 		<li>
 			<a href="/distribution" on:click={drawerClose}>
 				<div class={`h4 flex items-center`}>

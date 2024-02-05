@@ -3,100 +3,179 @@
 		Asset,
 		Bytes,
 		Checksum256,
-		Int64,
 		Name,
 		Serializer,
-		Struct,
-		Int32,
-		type TransactResult
+		type TransactResult,
+		UInt64,
+		type TransactResultReturnType,
+		type TransactResultReturnValue
 	} from '@wharfkit/session';
 	import { onDestroy, onMount } from 'svelte';
 	import { derived, writable, type Readable, type Writable } from 'svelte/store';
 	import { AlertCircle, Loader2, MemoryStick, PackagePlus } from 'svelte-lucide';
-	import { DropContract, accountKit, dropsContract, session, tokenContract } from '$lib/wharf';
+	import {
+		DropsContract,
+		accountKit,
+		dropsContract,
+		session,
+		systemContract,
+		tokenContract
+	} from '$lib/wharf';
 	import { getRamPrice } from '$lib/bancor';
-	import { sizeDropRowPurchase, sizeAccountRow, sizeStatRow } from '$lib/constants';
+	import { maximumBatchSize, sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
 	import { t } from '$lib/i18n';
-	import { epochEnded, epochNumber, epochWaitingAdvance } from '$lib/epoch';
-	import { Tab, TabAnchor, TabGroup } from '@skeletonlabs/skeleton';
+	import { epochNumber } from '$lib/epoch';
+	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 
 	const useRandomDrop: Writable<boolean> = writable(true);
-	const dropsAmount: Writable<number> = writable(1);
 	const randomDrop: Writable<Name> = writable(randomName());
 
 	const accountRamBalance: Writable<number> = writable();
 	const accountTokenBalance: Writable<Asset> = writable();
 
-	// Price of individual drops
+	const ramPrice = writable(0);
 	const dropsPrice: Writable<number> = writable();
-	const accountPrice: Writable<number> = writable();
-	const statsPrice: Writable<number> = writable();
 
-	const accountStats: Writable<DropContract.Types.account_row> = writable();
-	const accountEpochStats: Writable<DropContract.Types.stat_row[]> = writable([]);
-	const accountThisEpochStats: Readable<DropContract.Types.stat_row> = derived(
-		[accountEpochStats, epochNumber],
-		([$accountEpochStats, $epochNumber], set) => {
-			if ($accountEpochStats.length) {
-				const thisEpoch = $accountEpochStats.find((e) => e.epoch.equals($epochNumber));
-				if (thisEpoch) {
-					set(thisEpoch);
+	const accountContractBalance: Writable<DropsContract.Types.balances_row> = writable();
+	const accountContractDrops = derived(accountContractBalance, ($accountContractBalance) =>
+		$accountContractBalance ? Number($accountContractBalance.drops) : 0
+	);
+	const accountContractRam = derived(accountContractBalance, ($accountContractBalance) =>
+		$accountContractBalance ? Number($accountContractBalance.ram_bytes) : 0
+	);
+
+	const dropsAmount: Writable<number> = writable(10);
+	const customDropsAmount: Writable<boolean> = writable(false);
+	const customDropsValue: Writable<number> = writable();
+
+	const lastResult: Writable<DropsContract.Types.generate_return_value | undefined> = writable();
+	const lastResultId: Writable<string | undefined> = writable();
+	const lastResultError: Writable<string> = writable();
+
+	const transacting: Writable<boolean> = writable(false);
+	const transactBatchSize: Writable<number> = writable(0);
+	const transactBatchProgress: Writable<number> = writable(0);
+
+	const derivedDropsAmount: Readable<number> = derived(
+		[dropsAmount, customDropsAmount, customDropsValue],
+		([$dropsAmount, $customDropsAmount, $customDropsValue]) => {
+			if ($customDropsAmount) {
+				if ($customDropsValue) {
+					return Number($customDropsValue);
 				} else {
-					set(undefined);
+					return 0;
 				}
+			} else {
+				return $dropsAmount;
 			}
 		}
 	);
 
-	const totalPrice: Readable<number | undefined> = derived(
-		[dropsAmount, dropsPrice, accountPrice, statsPrice, accountStats, accountThisEpochStats],
-		([
-			$dropsAmount,
-			$dropsPrice,
-			$accountPrice,
-			$statsPrice,
-			$accountStats,
-			$accountThisEpochStats
-		]) => {
-			if ($dropsAmount && $dropsPrice && $accountPrice && $statsPrice) {
-				let cost = $dropsAmount * $dropsPrice;
-				if (!$accountStats) {
-					cost += $accountPrice;
+	const createBound = writable(true);
+
+	const totalRamRequired: Readable<number> = derived(
+		[createBound, derivedDropsAmount, accountContractRam],
+		([$createBound, $derivedDropsAmount, $accountContractRam]) => {
+			if ($derivedDropsAmount) {
+				/*
+				 * If the account has enough of a RAM balance to cover the cost of minting, then we can use the actual
+				 * size of the drop row as the RAM requirement using `sizeDropRow`.
+				 *
+				 * If the account does not have enough RAM balance to cover the cost of minting, then we need to use the
+				 * size of the drop row as the RAM requirement using `sizeDropRowPurchase`. This adds additional RAM as a
+				 * purchase buffer to prevent rounding errors that happen in the bancor algorithm.
+				 */
+				const ramRequiredWithBalance = $derivedDropsAmount * sizeDropRow;
+				if (!$createBound && $accountContractRam < ramRequiredWithBalance) {
+					const ramRequiredWithoutBalance = $derivedDropsAmount * sizeDropRowPurchase;
+					return ramRequiredWithoutBalance;
+				} else {
+					return ramRequiredWithBalance;
 				}
-				if (!$accountThisEpochStats) {
-					cost += $statsPrice;
+			}
+			return 0;
+		}
+	);
+
+	// The amount of RAM needed to complete the transaction
+	// totalRamToPurchase = totalRamRequired - accountContractBalance.ram_bytes
+	const totalRamToPurchase: Readable<number> = derived(
+		[createBound, totalRamRequired, accountContractRam],
+		([$createBound, $totalRamRequired, $accountContractRam]) => {
+			console.log('total', $totalRamRequired);
+			if (!$createBound && $totalRamRequired && $totalRamRequired > $accountContractRam) {
+				if ($accountContractRam) {
+					return $totalRamRequired - $accountContractRam;
+				} else {
+					return $totalRamRequired;
 				}
-				return cost;
+			}
+			return 0;
+		}
+	);
+
+	const totalRamCreditsToUse: Readable<number> = derived(
+		[createBound, totalRamRequired, accountContractBalance],
+		([$createBound, $totalRamRequired, $accountContractBalance]) => {
+			if (!$createBound && $totalRamRequired && $accountContractBalance) {
+				if ($totalRamRequired > Number($accountContractBalance.ram_bytes)) {
+					return Number($accountContractBalance.ram_bytes);
+				} else {
+					return $totalRamRequired;
+				}
+			}
+			return 0;
+		}
+	);
+
+	const totalPrice: Readable<number> = derived(
+		[ramPrice, totalRamToPurchase],
+		([$ramPrice, $totalRamToPurchase]) => {
+			console.log($ramPrice, $totalRamToPurchase);
+			return $ramPrice * $totalRamToPurchase;
+		}
+	);
+
+	const hasEnoughRAM: Readable<boolean> = derived(
+		[accountRamBalance, totalRamToPurchase],
+		([$accountRamBalance, $totalRamToPurchase]) => {
+			if ($accountRamBalance >= 0 && $totalRamToPurchase >= 0) {
+				return $accountRamBalance >= $totalRamToPurchase;
+			}
+			return false;
+		}
+	);
+
+	const hasEnoughTokens: Readable<boolean> = derived(
+		[accountTokenBalance, totalPrice],
+		([$accountTokenBalance, $totalPrice]) => {
+			if ($accountTokenBalance && $accountTokenBalance) {
+				return Number($accountTokenBalance.units) > $totalPrice;
+			}
+			return false;
+		}
+	);
+
+	const canGenerate: Readable<boolean> = derived(
+		[createBound, derivedDropsAmount, hasEnoughRAM, hasEnoughTokens, transacting],
+		([$createBound, $derivedDropsAmount, $hasEnoughRAM, $hasEnoughTokens, $transacting]) => {
+			const general = $derivedDropsAmount > 0 && !$transacting;
+			if ($createBound) {
+				return general && $hasEnoughRAM;
+			} else {
+				return general && $hasEnoughTokens;
 			}
 		}
 	);
 
-	const totalRam: Readable<number | undefined> = derived(
-		[dropsAmount, accountStats, accountThisEpochStats],
-		([$dropsAmount, $accountStats, $accountThisEpochStats]) => {
-			let amount = $dropsAmount * sizeDropRowPurchase;
-			if (!$accountStats) {
-				amount += sizeAccountRow;
-			}
-			if (!$accountThisEpochStats) {
-				amount += sizeStatRow;
-			}
-			return amount;
-		}
-	);
-
-	// let accountLoader: ReturnType<typeof setInterval>;
 	let ramLoader: ReturnType<typeof setInterval>;
 
 	onMount(async () => {
 		loadRamPrice();
-		// loadState();
-		// accountLoader = setInterval(loadAccountData, 5000);
 		ramLoader = setInterval(loadRamPrice, 2000);
 	});
 
 	onDestroy(() => {
-		// clearInterval(accountLoader);
 		clearInterval(ramLoader);
 	});
 
@@ -110,38 +189,15 @@
 
 	async function loadAccountData() {
 		await loadAccountBalances();
-		await loadAccountStats();
-		await loadAccountEpochStats();
+		await loadBalanceRow();
 	}
 
-	async function loadAccountStats() {
+	async function loadBalanceRow() {
 		if ($session) {
-			const results = await dropsContract.table('account').get($session.actor);
+			const results = await dropsContract.table('balances').get($session.actor);
+			console.log(results);
 			if (results) {
-				accountStats.set(results);
-			}
-		}
-	}
-
-	// async function loadState() {
-	// 	const state = await dropsContract.table('state').get();
-	// 	if (state) {
-	// 		dropsState.set(state);
-	// 	}
-	// }
-
-	async function loadAccountEpochStats() {
-		if ($session) {
-			const results = await dropsContract
-				.table('stat')
-				.query({
-					index_position: 'secondary',
-					from: $session.actor,
-					to: $session.actor
-				})
-				.all();
-			if (results) {
-				accountEpochStats.set(results);
+				accountContractBalance.set(results);
 			}
 		}
 	}
@@ -150,7 +206,6 @@
 		if ($session) {
 			const result = await accountKit.load($session.actor);
 			accountRamBalance.set(Number(result.resource('ram').available));
-			console.log(String(result.data.core_liquid_balance));
 			if (result.data.core_liquid_balance) {
 				accountTokenBalance.set(result.data.core_liquid_balance);
 			}
@@ -159,10 +214,9 @@
 
 	async function loadRamPrice() {
 		const cost_plus_fee = await getRamPrice();
+		ramPrice.set(Number(cost_plus_fee));
 		if (cost_plus_fee) {
 			dropsPrice.set(Number(cost_plus_fee) * sizeDropRowPurchase);
-			accountPrice.set(Number(cost_plus_fee) * sizeAccountRow);
-			statsPrice.set(Number(cost_plus_fee) * sizeStatRow);
 		}
 	}
 
@@ -176,248 +230,257 @@
 		return Name.from(drops);
 	}
 
-	@Struct.type('returnvalue')
-	class GenerateReturnValue extends Struct {
-		@Struct.field(Int32) drops!: Int32;
-		@Struct.field(Int64) epoch!: Int64;
-		@Struct.field(Asset) cost!: Asset;
-		@Struct.field(Asset) refund!: Asset;
-	}
-
-	const lastResult: Writable<GenerateReturnValue | undefined> = writable();
-	const lastResultId: Writable<string | undefined> = writable();
-	const lastResultError: Writable<string> = writable();
-	const transacting: Writable<boolean> = writable(false);
-
-	async function buy(event: Event) {
-		lastResultError.set('');
-		transacting.set(true);
+	async function claim() {
 		if ($session) {
-			const hash = String(Checksum256.hash(Bytes.from(String($randomDrop), 'utf8')));
-			const quantity = Asset.fromUnits($totalPrice, '4,EOS');
-			const actionData = {
-				from: $session?.actor,
-				// to: 'testing.gm',
-				quantity,
-				to: 'seed.gm',
-				// quantity: '1.0000 EOS',
-				memo: [$dropsAmount, hash].join(',')
-			};
-
-			const action = tokenContract.action('transfer', actionData);
-			let result: TransactResult;
-			try {
-				result = await $session.transact({ action });
-				// Set the last successful transaction ID
-				lastResultId.set(String(result.resolved?.transaction.id));
-
-				// Process return values
-				result.returns.forEach((returnValue) => {
-					try {
-						const data = Serializer.decode({
-							data: returnValue.hex,
-							type: DropContract.Types.generate_return_value
-						});
-						if (Number(data.epoch_drops) > 0) {
-							accountEpochStats.update((stats) => {
-								const newStats = [...stats];
-								const index = newStats.findIndex((s) => s.epoch.equals(data.epoch));
-								if (index >= 0) {
-									newStats[index].drops = data.epoch_drops;
-								} else {
-									newStats.push(
-										DropContract.Types.stat_row.from({
-											account: $session?.actor,
-											epoch: data.epoch,
-											id: 0,
-											drops: data.epoch_drops
-										})
-									);
-								}
-								return newStats;
-							});
-						}
-						if (Number(data.total_drops) > 0) {
-							accountStats.update((stats) => {
-								return {
-									...stats,
-									account: $session?.actor,
-									drops: data.total_drops
-								};
-							});
-						}
-						if (Number(data.drops) > 0) {
-							lastResult.set(data);
-						}
-					} catch (e) {
-						console.warn(e);
-					}
-				});
-				randomDrop.set(randomName());
-				loadRamPrice();
-			} catch (e) {
-				lastResult.set(undefined);
-				lastResultId.set(undefined);
-				lastResultError.set(e);
-			}
-			transacting.set(false);
-			setTimeout(loadAccountBalances, 400);
-		}
-	}
-
-	async function mint(event: Event) {
-		lastResultError.set('');
-		transacting.set(true);
-		if ($session) {
-			const hash = String(Checksum256.hash(Bytes.from(String($randomDrop), 'utf8')));
-			const action = dropsContract.action('mint', {
-				amount: $dropsAmount,
+			const action = dropsContract.action('claim', {
 				owner: $session.actor,
-				data: hash
+				sell_ram: true
 			});
+			await $session.transact({ action });
+			setTimeout(loadAccountBalances, 1000);
+			setTimeout(loadBalanceRow, 1000);
+		}
+	}
+
+	async function deposit() {
+		const action = tokenContract.action('transfer', {
+			from: $session.actor,
+			to: 'drops',
+			quantity: Asset.fromUnits(50000, '4,EOS'),
+			memo: String($session.actor)
+		});
+		await $session?.transact({ action });
+		setTimeout(loadAccountBalances, 1000);
+		setTimeout(loadBalanceRow, 1000);
+	}
+
+	async function sellram() {
+		const action = systemContract.action('sellram', {
+			account: $session.actor,
+			bytes: $accountRamBalance
+		});
+		await $session?.transact({ action });
+		setTimeout(loadAccountBalances, 1000);
+		setTimeout(loadBalanceRow, 1000);
+	}
+
+	async function buyram() {
+		const action = systemContract.action('buyrambytes', {
+			payer: $session.actor,
+			receiver: $session.actor,
+			bytes: UInt64.from(100000)
+		});
+		await $session?.transact({ action });
+		setTimeout(loadAccountBalances, 1000);
+		setTimeout(loadBalanceRow, 1000);
+	}
+
+	async function generate() {
+		lastResultError.set('');
+		transacting.set(true);
+		transactBatchSize.set(0);
+		transactBatchProgress.set(0);
+
+		const amount = $derivedDropsAmount;
+		const max = maximumBatchSize;
+
+		const batches = Math.ceil(amount / max);
+		if (batches > 1) {
+			const batchSizes = Array.from({ length: batches }, (_, idx) =>
+				idx === batches - 1 && amount % max > 0 ? amount % max : max
+			);
+			transactBatchSize.set(batchSizes.length);
+			for (const batchSize of batchSizes) {
+				await mint(batchSize, amount);
+				transactBatchProgress.update((p) => p + 1);
+				if ($transactBatchProgress < $transactBatchSize) {
+					await new Promise((r) => setTimeout(r, 500));
+				}
+			}
+		} else {
+			transactBatchSize.set(1);
+			await mint(amount, amount);
+			transactBatchProgress.set(1);
+		}
+
+		loadRamPrice();
+		setTimeout(loadAccountData, 1000);
+		transacting.set(false);
+	}
+
+	async function mint(amount: number, totalAmount: number) {
+		const hash = String(Checksum256.hash(Bytes.from(String(randomName()), 'utf8')));
+		const bound = $createBound;
+
+		// Specify the RAM required for this transaction and the RAM total
+		let ramRequired = amount * sizeDropRow;
+		let ramRequiredTotal = totalAmount * sizeDropRow;
+
+		// If RAM purchase is required, use the purchase size
+		if ($accountContractRam < ramRequired) {
+			ramRequired = amount * sizeDropRowPurchase;
+			ramRequiredTotal = totalAmount * sizeDropRowPurchase;
+		}
+
+		if ($session) {
+			const actions = [
+				dropsContract.action('generate', {
+					amount,
+					bound,
+					data: hash,
+					owner: $session.actor
+				})
+			];
+
+			const requiresRAMPurchase = $createBound && $accountRamBalance < ramRequired;
+			let ramPurchaseAmount = 0; // The bytes purchased in tx, will update account record on success
+			if (requiresRAMPurchase) {
+				ramPurchaseAmount = ramRequiredTotal;
+				actions.unshift(
+					systemContract.action('buyrambytes', {
+						payer: $session.actor,
+						receiver: $session.actor,
+						bytes: ramRequiredTotal
+					})
+				);
+			}
+
+			const requiresDeposit = !$createBound && $accountContractRam < ramRequired;
+			if (requiresDeposit) {
+				const depositRequired = $ramPrice * ($totalRamRequired - $accountContractRam);
+
+				actions.unshift(
+					tokenContract.action('transfer', {
+						from: $session.actor,
+						to: 'drops',
+						quantity: Asset.fromUnits(depositRequired, '4,EOS'),
+						memo: String($session.actor)
+					})
+				);
+			}
+
+			if (!$accountContractBalance) {
+				actions.unshift(
+					dropsContract.action('open', {
+						owner: $session.actor
+					})
+				);
+			}
+
 			let result: TransactResult;
 			try {
-				result = await $session.transact({ action });
+				result = await $session.transact({ actions });
+
 				// Set the last successful transaction ID
 				lastResultId.set(String(result.resolved?.transaction.id));
 
 				// Process return values
-				result.returns.forEach((returnValue) => {
-					try {
-						const data = Serializer.decode({
-							data: returnValue.hex,
-							type: DropContract.Types.generate_return_value
-						});
-						if (Number(data.epoch_drops) > 0) {
-							accountEpochStats.update((stats) => {
-								const newStats = [...stats];
-								const index = newStats.findIndex((s) => s.epoch.equals(data.epoch));
-								if (index >= 0) {
-									newStats[index].drops = data.epoch_drops;
-								} else {
-									newStats.push(
-										DropContract.Types.stat_row.from({
-											account: $session?.actor,
-											epoch: data.epoch,
-											id: 0,
-											drops: data.epoch_drops
-										})
-									);
-								}
-								return newStats;
-							});
-						}
-						if (Number(data.total_drops) > 0) {
-							accountStats.update((stats) => {
-								return {
-									...stats,
-									account: $session?.actor,
-									drops: data.total_drops
-								};
-							});
-						}
-						if (Number(data.drops) > 0) {
-							lastResult.set(data);
-						}
-					} catch (e) {
-						console.warn(e);
-					}
-				});
-				randomDrop.set(randomName());
-				loadRamPrice();
+				result.returns
+					.filter((r) => r.action.equals('generate'))
+					.forEach((v) => processReturn(v, bound, amount, ramPurchaseAmount));
 			} catch (e) {
 				lastResult.set(undefined);
 				lastResultId.set(undefined);
-				lastResultError.set(e);
+				lastResultError.set(String(e));
 			}
-			transacting.set(false);
-			setTimeout(loadAccountBalances, 400);
 		}
 	}
 
-	const selectDropAmount = (e: Event) => dropsAmount.set(Number(e.target.value));
+	function processReturn(
+		returnValue: TransactResultReturnValue,
+		bound: boolean,
+		mintAmount: number,
+		ramPurchaseAmount: number
+	) {
+		try {
+			const returned = Serializer.decode({
+				data: returnValue.hex,
+				type: DropsContract.Types.generate_return_value
+			});
 
-	let tabSet: number = 1;
+			// Set result of last transaction
+			lastResult.set(returned);
+
+			// Update UI balances
+			if (bound) {
+				accountRamBalance.update(
+					(balance) => balance + ramPurchaseAmount - Number(returned.bytes_used)
+				);
+				accountContractBalance.set(
+					DropsContract.Types.balances_row.from({
+						owner: $session.actor,
+						drops: row.drops.adding(mintAmount),
+						ram_bytes: row.ram_bytes
+					})
+				);
+			} else {
+				accountContractBalance.set(
+					DropsContract.Types.balances_row.from({
+						owner: $session.actor,
+						drops: $accountContractBalance.drops.adding(mintAmount),
+						ram_bytes: returned.bytes_balance
+					})
+				);
+			}
+		} catch (e) {
+			// console.warn(e);
+		}
+	}
+
+	const selectDropAmount = (e: Event) => {
+		if (e.target.value === 'X') {
+			customDropsAmount.set(true);
+		} else {
+			customDropsAmount.set(false);
+			dropsAmount.set(Number(e.target.value));
+		}
+	};
 </script>
 
-<div class="container p-4 sm:p-8 lg:p-16 mx-auto flex justify-center items-center">
-	<div class="space-y-4 flex flex-col bg-surface-900 p-8 rounded-lg shadow-xl">
-		<div class="h1 flex items-center">
+<div class="container p-4 sm:p-8 lg:p-16">
+	<div class="mx-auto py-4 sm:p-4 space-y-4 bg-surface-900 rounded-lg shadow-xl">
+		<div class="h1 flex items-center px-2 sm:px-6">
 			<PackagePlus class="dark:text-blue-400 inline size-12 mr-4" />
 			<span
 				class="bg-gradient-to-br from-blue-500 to-cyan-300 bg-clip-text text-transparent box-decoration-clone"
 				>{$t('common.generate')}</span
 			>
 		</div>
-		<div class="text-center grid grid-cols-3 gap-4">
-			<div>
-				<div class="h2 font-bold">
-					{#if $accountStats}
-						{$accountStats.drops}
-					{:else}
-						0
-					{/if}
+		<p class="px-2 sm:px-6">
+			Generate bound drops using your own RAM or unbound drops using tokens.
+		</p>
+		<div class="p-2 sm:p-6 space-y-8 shadow-xl rounded-lg">
+			<form class="space-y-8" on:submit|preventDefault={generate}>
+				<div>
+					<p>Select bound vs unbound</p>
+					<RadioGroup>
+						<RadioItem bind:group={$createBound} name="justify" value={true}>Bound</RadioItem>
+						<RadioItem bind:group={$createBound} name="justify" value={false}>Unbound</RadioItem>
+					</RadioGroup>
 				</div>
-				{$t('common.itemnames')}
-				<div class="text-slate-400">{$t('common.total')}</div>
-			</div>
-			<div>
-				<div class="h2 font-bold">
-					{#if $accountThisEpochStats}
-						{$accountThisEpochStats.drops}
-					{:else}
-						0
-					{/if}
-				</div>
-				{$t('common.itemnames')}
-				<div class="text-slate-400">{$t('common.epoch')}</div>
-			</div>
-			<div>
-				<div class="h2 font-bold">
-					{#if $epochNumber}
-						{$epochNumber}
-					{:else}
-						~
-					{/if}
-				</div>
-				{$t('common.epoch')}
-				<div class="text-slate-400">{$t('common.current')}</div>
-			</div>
-		</div>
-		<TabGroup
-			justify="justify-center"
-			active="bg-blue-500"
-			hover="hover:bg-blue-400"
-			flex="flex-1 lg:flex-none"
-			rounded=""
-			border=""
-			class="bg-surface-100-800-token w-full"
-		>
-			<Tab bind:group={tabSet} name="tab2" value={1}>
-				<span>{$t('generate.useram')}</span>
-			</Tab>
-			<Tab bind:group={tabSet} name="tab1" value={0}>
-				<span>{$t('generate.useeos')}</span>
-			</Tab>
-			<svelte:fragment slot="panel">
-				<div class="p-6 space-y-8 shadow-xl rounded-lg">
-					<form class="space-y-8" on:submit|preventDefault={tabSet === 0 ? buy : mint}>
-						{#if tabSet === 0}
-							<p>{$t('generate.headereos', { itemnames: $t('common.itemnames') })}</p>
-						{:else if tabSet === 1}
-							<p>{$t('generate.headerram', { itemnames: $t('common.itemnames') })}</p>
+				<label class="label">
+					<span>{$t('generate.togenerate')}</span>
+					<select class="select" on:change={selectDropAmount} value={$dropsAmount}>
+						{#each [1, 10, 100, 1000, 10000, 'X'] as amount}
+							<option value={amount}>+ {amount.toLocaleString()} {$t('common.itemnames')}</option>
+						{/each}
+					</select>
+				</label>
+				{#if $customDropsAmount}
+					<label class="label">
+						<span>{$t('generate.enteramount')}</span>
+						<input
+							class="input"
+							class:input-error={!$hasEnoughTokens}
+							type="text"
+							bind:value={$customDropsValue}
+						/>
+						{#if !$hasEnoughTokens}
+							<p class="text-red-500">Not enough tokens</p>
 						{/if}
-						<label class="label">
-							<span>{$t('generate.togenerate')}</span>
-							<select class="select" on:change={selectDropAmount} value={$dropsAmount}>
-								{#each [1, 10, 100, 1000, 10000] as amount}
-									<option value={amount}
-										>+ {amount.toLocaleString()} {$t('common.itemnames')}</option
-									>
-								{/each}
-							</select>
-						</label>
-						<!-- <label>
+					</label>
+				{/if}
+				<!-- <label>
                             <label class="flex items-center space-x-2">
                                 <input
                                     class="checkbox"
@@ -428,211 +491,211 @@
                                 <p>Randomly generate drops value</p>
                             </label>
                         </label> -->
-						{#if !$useRandomDrop}
-							<label class="label space-y-4">
-								<span class="h4 font-bold"
-									>{$t('generate.dropseedvalue', { itemname: $t('common.itemname') })}</span
-								>
-								<input class="input" type="text" placeholder="Random Drop" value={$randomDrop} />
-							</label>
-						{/if}
-						{#if $lastResultError}
-							<aside class="alert variant-filled-error">
-								<div><AlertCircle /></div>
-								<div class="alert-message">
-									<h3 class="h3">{$t('common.transacterror')}</h3>
-									<p>{$lastResultError}</p>
-								</div>
-								<div class="alert-actions"></div>
-							</aside>
-						{/if}
-						{#if $session}
-							<button
-								class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-								disabled={$epochWaitingAdvance || $transacting}
-							>
-								<span>
-									{#if $transacting}
-										<Loader2 class="animate-spin" />
+				{#if !$useRandomDrop}
+					<label class="label space-y-4">
+						<span class="h4 font-bold"
+							>{$t('generate.dropseedvalue', { itemname: $t('common.itemname') })}</span
+						>
+						<input class="input" type="text" placeholder="Random Drop" value={$randomDrop} />
+					</label>
+				{/if}
+				<div class="table-container">
+					<table class="table">
+						<thead>
+							<tr>
+								<th class="text-center table-cell-fit">Change</th>
+								<th class="text-center">Balance</th>
+								<th class="text-center">Delta</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<th class="table-cell-fit px-6">Drops</th>
+								<td class="text-center">
+									{#if $accountContractBalance}
+										{$accountContractDrops.toLocaleString()}
 									{:else}
-										<MemoryStick />
+										0
 									{/if}
-								</span>
-								<span class="text-sm">
-									{#if tabSet === 0}
-										{$t('common.generate')}
-										{$t('common.costof')}
-										~{Asset.fromUnits($totalPrice, '4,EOS')}
-									{:else if tabSet === 1}
-										{$t('common.generate')}
-										{$t('common.costof')}
-										~{($totalRam / 1024).toLocaleString()}kb
-									{/if}
-								</span>
-							</button>
-							<div class="text-center">
-								{#if tabSet === 0}
-									<span>EOS Balance:</span>
-									<span>{$accountTokenBalance}</span>
-								{:else if tabSet === 1}
-									<span>RAM Balance:</span>
-									<span>{($accountRamBalance / 1024).toLocaleString()} kb</span>
-								{/if}
-							</div>
-						{:else}
-							<aside class="alert variant-filled-error">
-								<div><AlertCircle /></div>
-								<div class="alert-message">
-									<h3 class="h3">{$t('common.signinfirst')}</h3>
-									<p>{$t('generate.signinfirst')}</p>
-								</div>
-								<div class="alert-actions"></div>
-							</aside>
-						{/if}
-					</form>
+								</td>
+								<td class="text-center">
+									<span class="text-green-500">
+										+ {$derivedDropsAmount.toLocaleString()}
+									</span>
+								</td>
+							</tr>
+							{#if $totalPrice > 0}
+								<tr>
+									<th class="table-cell-fit px-6">EOS (Balance)</th>
+									<td class="text-center">
+										{#if $accountTokenBalance}
+											{Number($accountTokenBalance.value).toLocaleString()}
+										{:else}
+											0
+										{/if}
+									</td>
+									<td class="text-center">
+										<span class="text-yellow-500">
+											- {Number(Asset.fromUnits($totalPrice, '4,EOS').value).toLocaleString()}
+										</span>
+									</td>
+								</tr>
+							{/if}
+							{#if !$createBound && $accountContractBalance && $totalRamCreditsToUse > 0}
+								<tr>
+									<th class="table-cell-fit px-6">RAM (Credits)</th>
+									<td class="text-center">
+										{#if $accountContractBalance}
+											{Number($accountContractBalance.ram_bytes).toLocaleString()}
+										{:else}
+											0
+										{/if}
+									</td>
+									<td class="text-center">
+										<span class="text-yellow-500">
+											- {$totalRamCreditsToUse.toLocaleString()}
+										</span>
+									</td>
+								</tr>
+							{/if}
+							{#if $createBound && $ramPrice && $totalRamRequired > 0 && $accountRamBalance < $totalRamRequired}
+								<tr>
+									<th class="table-cell-fit px-6">RAM (Purchase)</th>
+									<td class="text-center">
+										{#if $accountRamBalance}
+											{Asset.from($accountTokenBalance.value, '4,EOS')}
+										{:else}
+											0
+										{/if}
+									</td>
+									<td class="text-center">
+										<span class="text-yellow-500">
+											- {Asset.fromUnits($totalRamRequired * $ramPrice, '4,EOS')}
+										</span>
+									</td>
+								</tr>
+							{/if}
+							{#if $createBound && $totalRamRequired > 0 && $accountRamBalance >= $totalRamRequired}
+								<tr>
+									<th class="table-cell-fit px-6">RAM (Balance)</th>
+									<td class="text-center">
+										{#if $accountRamBalance}
+											{$accountRamBalance.toLocaleString()}
+										{:else}
+											0
+										{/if}
+									</td>
+									<td class="text-center">
+										<span class="text-yellow-500">
+											- {$totalRamRequired.toLocaleString()}
+										</span>
+									</td>
+								</tr>
+							{/if}
+						</tbody>
+					</table>
 				</div>
-			</svelte:fragment>
-		</TabGroup>
-		{#if $lastResult}
-			<div class="table-container">
-				<table class="table">
-					<thead>
-						<tr>
-							<th
-								colspan="3"
-								class="variant-filled w-full bg-gradient-to-br from-green-500 to-green-700 box-decoration-clone"
-							>
-								<div class="text-white text-center">{$t('common.transactsuccess')}</div>
-								<div class="lowercase text-xs text-white text-center">
-									<a href={`https://bloks.io/transaction/${$lastResultId}`}
-										><pre>{$lastResultId}</pre></a
+				{#if $lastResultError}
+					<aside class="alert variant-filled-error">
+						<div><AlertCircle /></div>
+						<div class="alert-message">
+							<h3 class="h3">{$t('common.transacterror')}</h3>
+							<p>{$lastResultError}</p>
+						</div>
+						<div class="alert-actions"></div>
+					</aside>
+				{/if}
+				{#if $lastResult}
+					<div class="table-container">
+						<table class="table">
+							<thead>
+								<tr>
+									<th
+										colspan="3"
+										class="text-center variant-filled w-full bg-gradient-to-br from-green-500 to-green-700 box-decoration-clone"
 									>
-								</div>
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td class="text-right">{$lastResult.drops}</td>
-							<td
-								>{$t('generate.generatedropsepoch', {
-									itemnames: $t('common.itemnames'),
-									epoch: $lastResult.epoch
-								})}
-							</td>
-						</tr>
-						<tr>
-							<td class="text-right">{$lastResult.cost}</td>
-							<td>{$t('generate.ramcost')}</td>
-						</tr>
-						<tr>
-							<td class="text-right">{$lastResult.refund}</td>
-							<td>{$t('common.overpaymentrefund')}</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-		{/if}
-		{#if $dropsAmount && $dropsPrice}
-			<div class="table-container">
-				<table class="table table-hover">
-					<thead>
-						<tr>
-							<th colspan="3"> {$t('generate.costbreakdown')} </th>
-						</tr>
-						<!-- <tr>
-								<th class="text-right">Item</th>
-								<th class="text-center">Count</th>
-								<th class="text-right">Cost</th>
-							</tr> -->
-					</thead>
-					<tbody>
-						<tr>
-							<td>
-								<div class="text-lg font-bold">{$t('common.itemnames')}</div>
-								{$t('generate.ramstorage')}
-							</td>
-							<td class="text-center">
-								<div class="text-lg font-bold">
-									{$dropsAmount}
-								</div>
-							</td>
-							<td class="text-right">
-								{#if tabSet === 0}
-									<div class="text-lg font-bold">
-										{Asset.fromUnits($dropsAmount * $dropsPrice, '4,EOS')}
-									</div>
-									<div>{($dropsAmount * sizeDropRowPurchase).toLocaleString()} bytes</div>
-								{:else if tabSet === 1}
-									<div class="text-lg font-bold">
-										<div>{($dropsAmount * sizeDropRowPurchase).toLocaleString()} bytes</div>
-									</div>
-								{/if}
-							</td>
-						</tr>
-						{#if !$accountStats}
-							<tr>
-								<td>
-									<div class="text-lg font-bold">{$t('common.account')}</div>
-									{$t('generate.ramsignup')}
-								</td>
-								<td class="text-center">
-									<div class="text-lg font-bold">1</div>
-								</td>
-								<td class="text-right">
-									{#if tabSet === 0}
-										<div class="text-lg font-bold">{Asset.fromUnits($accountPrice, '4,EOS')}</div>
-										<div>{sizeAccountRow.toLocaleString()} bytes</div>
-									{:else if tabSet === 1}
-										<div class="text-lg font-bold">
-											<div>{sizeAccountRow.toLocaleString()} bytes</div>
+										<div class="text-white">
+											{$t('common.transactsuccess')}
 										</div>
-									{/if}
-								</td>
-							</tr>
-						{/if}
-						{#if !$accountThisEpochStats || $epochEnded}
-							<tr>
-								<td>
-									<div class="text-lg font-bold">{$t('common.epoch')}</div>
-									{$t('generate.ramepoch')}
-								</td>
-								<td class="text-center">
-									<div class="text-lg font-bold">1</div>
-								</td>
-								<td class="text-right">
-									{#if tabSet === 0}
-										<div class="text-lg font-bold">{Asset.fromUnits($statsPrice, '4,EOS')}</div>
-										<div>{sizeStatRow.toLocaleString()} bytes</div>
-									{:else if tabSet === 1}
-										<div class="text-lg font-bold">
-											{sizeStatRow.toLocaleString()} bytes
+										<div class="lowercase text-xs text-white hidden sm:block">
+											{$transactBatchProgress} / {$transactBatchSize}
 										</div>
-									{/if}
-								</td>
-							</tr>
-						{/if}
-					</tbody>
-					<tfoot>
-						<tr>
-							<td colspan="3" class="text-right">
-								{#if tabSet === 0}
-									<div class="font-bold text-xl">
-										<div class="text-sm">{$t('common.total')}</div>
-										{Asset.fromUnits(Number($totalPrice), '4,EOS')}
-									</div>
-									<div>{$totalRam?.toLocaleString()} bytes</div>
-								{:else if tabSet === 1}
-									<div class="text-lg font-bold">
-										{$totalRam?.toLocaleString()} bytes
-									</div>
-								{/if}
-							</td>
-						</tr>
-					</tfoot>
-				</table>
-			</div>
-		{/if}
+									</th>
+								</tr>
+							</thead>
+						</table>
+					</div>
+				{/if}
+				{#if $session}
+					<button
+						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+						disabled={!$canGenerate}
+					>
+						<span>
+							{#if $transacting}
+								<Loader2 class="animate-spin" />
+							{:else}
+								<MemoryStick />
+							{/if}
+						</span>
+						<span class="text-sm">
+							{$t('common.generate')}
+						</span>
+					</button>
+				{:else}
+					<aside class="alert variant-filled-error">
+						<div><AlertCircle /></div>
+						<div class="alert-message">
+							<h3 class="h3">{$t('common.signinfirst')}</h3>
+							<p>{$t('generate.signinfirst')}</p>
+						</div>
+						<div class="alert-actions"></div>
+					</aside>
+				{/if}
+			</form>
+		</div>
+		<div class="text-center space-y-2">
+			<div class="h1">DEV TOOLS</div>
+			<p>
+				<span>Account RAM Balance:</span>
+				<span>{Number($accountRamBalance).toLocaleString()} bytes</span>
+			</p>
+			<p>
+				<span>Account Token Balance:</span>
+				<span>{$accountTokenBalance}</span>
+			</p>
+
+			{#if $accountContractBalance}
+				<p>
+					<span>Contract RAM Balance:</span>
+					<span>{Number($accountContractBalance.ram_bytes).toLocaleString()} kb</span>
+				</p>
+				<button
+					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+					on:click|preventDefault={claim}
+				>
+					claim
+				</button>
+				<button
+					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+					on:click|preventDefault={deposit}
+				>
+					deposit 5 EOS
+				</button>
+				<button
+					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+					on:click|preventDefault={buyram}
+				>
+					buy 100kb ram
+				</button>
+				<button
+					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+					on:click|preventDefault={sellram}
+				>
+					sell all ram
+				</button>
+			{/if}
+		</div>
 	</div>
 </div>
 

@@ -13,7 +13,7 @@
 	import DropDestroy from '$lib/components/drops/destroy.svelte';
 	import DropTransfer from '$lib/components/drops/transfer.svelte';
 
-	import { DropContract, session, dropsContract } from '$lib/wharf';
+	import { DropsContract, session, dropsContract } from '$lib/wharf';
 	import { getRamPrice, getRamPriceMinusFee } from '$lib/bancor';
 	import { sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
 	import type { TableRowCursor } from '@wharfkit/contract';
@@ -23,7 +23,7 @@
 	const selected: Writable<Record<string, boolean>> = writable({});
 	const selectingAll = writable(false);
 
-	const drops: Writable<DropContract.Types.drop_row[]> = writable([]);
+	const drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
 	const dropsLoaded = writable(0);
 	const dropsProcessed = writable(0);
 
@@ -88,7 +88,7 @@
 				to
 			});
 
-			const accumulator: DropContract.Types.drop_row[] = [];
+			const accumulator: DropsContract.Types.drop_row[] = [];
 			while (!cursor.endReached) {
 				const rows = await cursor.next();
 				accumulator.push(...rows);
@@ -106,7 +106,7 @@
 		selectingAll.set(false);
 	}
 
-	let tabSet: number = 1;
+	let tabSet: number = 2;
 </script>
 
 <div class="container mx-auto grid grid-cols-3 2xl:grid-cols-5">
@@ -188,30 +188,6 @@
 				</section>
 			{:else if $drops.length}
 				<div class="space-y-8">
-					<div class="text-center grid grid-cols-2 gap-4">
-						<div>
-							<div class="h2 font-bold">
-								{#if $drops.length}
-									{$drops.length.toLocaleString()}
-								{:else}
-									0
-								{/if}
-							</div>
-							{$t('common.itemnames')}
-							<div class="text-slate-400">{$t('common.total')}</div>
-						</div>
-						<div>
-							<div class="h2 font-bold">
-								{#if $epochNumber}
-									{$epochNumber}
-								{:else}
-									~
-								{/if}
-							</div>
-							{$t('common.epoch')}
-							<div class="text-slate-400">{$t('common.current')}</div>
-						</div>
-					</div>
 					<DropsTable {drops} {selected} {selectingAll} />
 				</div>
 			{:else}

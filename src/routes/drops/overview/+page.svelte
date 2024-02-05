@@ -7,7 +7,7 @@
 	import { t } from '$lib/i18n';
 
 	import MyItems from '$lib/components/headers/myitems.svelte';
-	import { DropContract, dropsContract, session, systemContract } from '$lib/wharf';
+	import { DropsContract, dropsContract, session, systemContract } from '$lib/wharf';
 	import { epochNumber } from '$lib/epoch';
 
 	const dropPrice: Writable<number> = writable();
@@ -15,7 +15,7 @@
 	let ramPriceInterval: ReturnType<typeof setInterval>;
 	let dropsCountInterval: ReturnType<typeof setInterval>;
 
-	const epochStats: Writable<DropContract.Types.stat_row[]> = writable([]);
+	const epochStats: Writable<DropsContract.Types.stat_row[]> = writable([]);
 	const dropsTotal: Readable<number> = derived([epochStats], ([$epochStats]) => {
 		if ($epochStats) {
 			return $epochStats.reduce((acc, cur) => acc + Number(cur.drops), 0);

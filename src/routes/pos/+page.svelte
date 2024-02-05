@@ -5,7 +5,7 @@
 
 	import { t } from '$lib/i18n';
 	import ProofOfDrop from '$lib/components/headers/pos.svelte';
-	import { DropContract, session, dropsContract, contractKit } from '$lib/wharf';
+	import { DropsContract, session, dropsContract, contractKit } from '$lib/wharf';
 	import { hex2bin } from '$lib/compute';
 	import { epochNumber, lastEpoch, lastEpochDrop, lastEpochRevealed } from '$lib/epoch';
 
@@ -20,8 +20,8 @@
 
 	const demoBalance: Writable<Asset> = writable();
 
-	const drops: Writable<DropContract.Types.drop_row[]> = writable([]);
-	const validdrops: Writable<DropContract.Types.drop_row[]> = writable([]);
+	const drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
+	const validdrops: Writable<DropsContract.Types.drop_row[]> = writable([]);
 
 	session.subscribe(() => {
 		loadBalance();
@@ -82,7 +82,7 @@
 				to
 			});
 
-			const accumulator: DropContract.Types.drop_row[] = [];
+			const accumulator: DropsContract.Types.drop_row[] = [];
 			while (!cursor.endReached) {
 				const rows = await cursor.next();
 				accumulator.push(...rows);
@@ -91,8 +91,8 @@
 
 			dropsFound.set(accumulator.length);
 
-			const validToSubmit: DropContract.Types.drop_row[] = accumulator.reduce(
-				(acc: DropContract.Types.drop_row[], row: DropContract.Types.drop_row) => {
+			const validToSubmit: DropsContract.Types.drop_row[] = accumulator.reduce(
+				(acc: DropsContract.Types.drop_row[], row: DropsContract.Types.drop_row) => {
 					dropsProcessed.update((s) => s + 1);
 					const validEpoch = Number(row.epoch) <= Number($lastEpoch);
 					if (!validEpoch) {

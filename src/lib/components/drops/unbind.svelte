@@ -4,11 +4,11 @@
 	import { Asset, Serializer, type TransactResult } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropContract, session, dropsContract, tokenContract } from '$lib/wharf';
+	import { DropsContract, session, dropsContract, tokenContract } from '$lib/wharf';
 	import { sizeDropRow } from '$lib/constants';
 
 	const unbinding = writable(false);
-	export let drops: Writable<DropContract.Types.drop_row[]> = writable([]);
+	export let drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
 	export let dropsPricePlusFee: Writable<number> = writable(0);
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean> = writable(false);
@@ -85,7 +85,7 @@
 				result.returns.forEach((returnValue) => {
 					const data = Serializer.decode({
 						data: returnValue.hex,
-						type: DropContract.Types.generate_return_value
+						type: DropsContract.Types.generate_return_value
 					});
 
 					if (Number(data.cost.value) > 0) {

@@ -4,20 +4,35 @@
 	import { Asset, Serializer, type TransactResult } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropContract, session, dropsContract } from '$lib/wharf';
+	import { DropsContract, session, dropsContract } from '$lib/wharf';
 	import { sizeDropRow } from '$lib/constants';
+	import { onMount } from 'svelte';
+	import { getRamPrice } from '$lib/bancor';
 
 	const destroying = writable(false);
-	export let drops: Writable<DropContract.Types.drop_row[]> = writable([]);
+	export let drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
 	export let dropsPrice: Writable<number> = writable(0);
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean> = writable(false);
 
+	const ramPrice = writable(0);
+
+	let ramLoader: ReturnType<typeof setInterval>;
+
+	onMount(async () => {
+		loadRamPrice();
+		ramLoader = setInterval(loadRamPrice, 2000);
+	});
+
+	async function loadRamPrice() {
+		const cost_plus_fee = await getRamPrice();
+		ramPrice.set(Number(cost_plus_fee));
+	}
+
 	interface DestroyResult {
 		destroyed: number;
-		ramsold: number;
-		redeemed: Asset;
-		reclaimed: number;
+		bytes_reclaimed: number;
+		unbound_destroyed: number;
 		txid: string;
 	}
 
@@ -45,15 +60,8 @@
 		($numUnboundSelected) => $numUnboundSelected > 0
 	);
 
-	const estimatedEOS = derived(
-		[dropsPrice, numUnboundSelected],
-		([$dropsPrice, $numUnboundSelected]) => {
-			return $dropsPrice * $numUnboundSelected;
-		}
-	);
-
-	const estimatedRAM = derived(numBoundSelected, ($numBoundSelected) => {
-		return sizeDropRow * $numBoundSelected;
+	const estimatedRAM = derived(selected, ($selected) => {
+		return sizeDropRow * Object.keys($selected).length;
 	});
 
 	const lastDestroyResult: Writable<DestroyResult | undefined> = writable();
@@ -63,49 +71,62 @@
 		destroying.set(true);
 		lastDestroyError.set(undefined);
 		if ($session) {
-			const action = dropsContract.action('destroy', {
-				owner: $session?.actor,
-				drops_ids: Object.keys($selected),
-				memo: ''
-			});
+			const actions = [
+				dropsContract.action('destroy', {
+					owner: $session?.actor,
+					drops_ids: Object.keys($selected),
+					memo: ''
+				})
+			];
+
+			if ($numUnboundSelected > 0) {
+				actions.push(
+					dropsContract.action('claim', {
+						owner: $session?.actor,
+						sell_ram: true
+					})
+				);
+			}
 
 			let result: TransactResult;
 			try {
-				result = await $session.transact({ action });
+				result = await $session.transact({ actions });
 				destroying.set(false);
 
 				result.returns.forEach((returnValue) => {
 					try {
 						const data = Serializer.decode({
 							data: returnValue.hex,
-							type: DropContract.Types.destroy_return_value
+							type: DropsContract.Types.destroy_return_value
 						});
 
-						if (Number(data.ram_sold.value) > 0 || Number(data.ram_reclaimed.value) > 0) {
-							// Remove destroyed from list
-							const dropsDestroyed = Object.keys($selected).map((s) => String(s));
+						// Remove destroyed from list
+						const dropsDestroyed = Object.keys($selected).map((s) => String(s));
 
-							// Clear selected
-							selected.set({});
-							selectingAll.set(false);
+						// Clear selected
+						selected.set({});
+						selectingAll.set(false);
 
-							// Update the store and remove those that were destroyed
-							drops.update((current) => {
-								for (const toRemove of dropsDestroyed) {
-									const index = current.findIndex((row) => String(row.seed) === String(toRemove));
-									current.splice(index, 1);
-								}
-								return current;
-							});
+						// Update the store and remove those that were destroyed
+						drops.update((current) => {
+							for (const toRemove of dropsDestroyed) {
+								const index = current.findIndex((row) => {
+									console.log('row.seed', String(row.seed));
+									console.log('toRemove', String(toRemove));
+									return String(row.seed) === String(toRemove);
+								});
+								console.log('index', index);
+								current.splice(index, 1);
+							}
+							return current;
+						});
 
-							lastDestroyResult.set({
-								destroyed: dropsDestroyed.length,
-								ramsold: Number(data.ram_sold),
-								redeemed: data.redeemed,
-								reclaimed: Number(data.ram_reclaimed),
-								txid: String(result.resolved?.transaction.id)
-							});
-						}
+						lastDestroyResult.set({
+							destroyed: dropsDestroyed.length,
+							bytes_reclaimed: Number(data.bytes_reclaimed),
+							unbound_destroyed: Number(data.unbound_destroyed),
+							txid: String(result.resolved?.transaction.id)
+						});
 					} catch (e) {
 						// console.log(e);
 					}
@@ -134,24 +155,25 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#if $isBoundSelected}
-					<tr>
-						<th>{$t('inventory.ramreleased')}</th>
-						<td>{$estimatedRAM} bytes</td>
-					</tr>
-				{/if}
-				{#if $isUnboundSelected}
-					<tr>
-						<th>{$t('inventory.itemeosredeemed')}</th>
-						<td>{Asset.fromUnits($estimatedEOS, '4,EOS')}</td>
-					</tr>
-				{/if}
 				{#if !$isBoundSelected && !$isUnboundSelected}
 					<tr>
 						<td colspan="2" class="text-center">
 							{$t('inventory.estimationwaiting', { itemnames: $t('common.itemnames') })}
 						</td>
 					</tr>
+				{:else}
+					{#if $numBoundSelected > 0}
+						<tr>
+							<th>{$t('inventory.ramreleased')}</th>
+							<td>{sizeDropRow * $numBoundSelected} bytes</td>
+						</tr>
+					{/if}
+					{#if $numUnboundSelected > 0}
+						<tr>
+							<th>{$t('inventory.eosreturned')}</th>
+							<td>{Asset.fromUnits(sizeDropRow * $numUnboundSelected * $ramPrice, '4,EOS')}</td>
+						</tr>
+					{/if}
 				{/if}
 			</tbody>
 		</table>
@@ -203,16 +225,16 @@
 						>
 						<td>{$lastDestroyResult.destroyed}</td>
 					</tr>
-					{#if $lastDestroyResult.ramsold > 0}
+					{#if $lastDestroyResult.bytes_reclaimed > 0}
 						<tr>
-							<td class="text-right">{$t('inventory.itemeosredeemed')}</td>
-							<td>{$lastDestroyResult.redeemed}</td>
+							<td class="text-right">{$t('inventory.bytes_reclaimed')}</td>
+							<td>{$lastDestroyResult.bytes_reclaimed}</td>
 						</tr>
 					{/if}
-					{#if $lastDestroyResult.reclaimed > 0}
+					{#if $lastDestroyResult.unbound_destroyed > 0}
 						<tr>
-							<td class="text-right">{$t('inventory.itemramreclaimed')}</td>
-							<td>{$lastDestroyResult.reclaimed}</td>
+							<td class="text-right">{$t('inventory.unbound_destroyed')}</td>
+							<td>{$lastDestroyResult.unbound_destroyed}</td>
 						</tr>
 					{/if}
 				</tbody>
