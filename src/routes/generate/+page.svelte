@@ -12,6 +12,7 @@
 	} from '@wharfkit/session';
 	import { onDestroy, onMount } from 'svelte';
 	import { derived, writable, type Readable, type Writable } from 'svelte/store';
+	import { page } from '$app/stores';
 	import { AlertCircle, Loader2, MemoryStick, PackagePlus } from 'svelte-lucide';
 	import {
 		DropsContract,
@@ -55,6 +56,8 @@
 	const transacting: Writable<boolean> = writable(false);
 	const transactBatchSize: Writable<number> = writable(0);
 	const transactBatchProgress: Writable<number> = writable(0);
+
+	const devmode = $page.url.searchParams.has('dev');
 
 	const derivedDropsAmount: Readable<number> = derived(
 		[dropsAmount, customDropsAmount, customDropsValue],
@@ -654,48 +657,50 @@
 				{/if}
 			</form>
 		</div>
-		<div class="text-center space-y-2">
-			<div class="h1">DEV TOOLS</div>
-			<p>
-				<span>Account RAM Balance:</span>
-				<span>{Number($accountRamBalance).toLocaleString()} bytes</span>
-			</p>
-			<p>
-				<span>Account Token Balance:</span>
-				<span>{$accountTokenBalance}</span>
-			</p>
-
-			{#if $accountContractBalance}
+		{#if devmode}
+			<div class="text-center space-y-2">
+				<div class="h1">DEV TOOLS</div>
 				<p>
-					<span>Contract RAM Balance:</span>
-					<span>{Number($accountContractBalance.ram_bytes).toLocaleString()} kb</span>
+					<span>Account RAM Balance:</span>
+					<span>{Number($accountRamBalance).toLocaleString()} bytes</span>
 				</p>
-				<button
-					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-					on:click|preventDefault={claim}
-				>
-					claim
-				</button>
-				<button
-					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-					on:click|preventDefault={deposit}
-				>
-					deposit 5 EOS
-				</button>
-				<button
-					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-					on:click|preventDefault={buyram}
-				>
-					buy 100kb ram
-				</button>
-				<button
-					class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-					on:click|preventDefault={sellram}
-				>
-					sell all ram
-				</button>
-			{/if}
-		</div>
+				<p>
+					<span>Account Token Balance:</span>
+					<span>{$accountTokenBalance}</span>
+				</p>
+
+				{#if $accountContractBalance}
+					<p>
+						<span>Contract RAM Balance:</span>
+						<span>{Number($accountContractBalance.ram_bytes).toLocaleString()} kb</span>
+					</p>
+					<button
+						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+						on:click|preventDefault={claim}
+					>
+						claim
+					</button>
+					<button
+						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+						on:click|preventDefault={deposit}
+					>
+						deposit 5 EOS
+					</button>
+					<button
+						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+						on:click|preventDefault={buyram}
+					>
+						buy 100kb ram
+					</button>
+					<button
+						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+						on:click|preventDefault={sellram}
+					>
+						sell all ram
+					</button>
+				{/if}
+			</div>
+		{/if}
 	</div>
 </div>
 
