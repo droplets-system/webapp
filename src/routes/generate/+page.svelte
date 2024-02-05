@@ -38,9 +38,9 @@
 
 	// Form and processing
 	const createBound = writable(true);
-	const dropsAmount: Writable<number> = writable();
-	const customDropsAmount: Writable<boolean> = writable(true);
-	const customDropsValue: Writable<number> = writable(10000);
+	const dropsAmount: Writable<number> = writable(1);
+	const customDropsAmount: Writable<boolean> = writable(false);
+	const customDropsValue: Writable<number> = writable();
 	const lastResult: Writable<DropsContract.Types.generate_return_value | undefined> = writable();
 	const lastResultId: Writable<string | undefined> = writable();
 	const lastResultError: Writable<string> = writable();
