@@ -109,8 +109,8 @@
 	let tabSet: number = 2;
 </script>
 
-<div class="container mx-auto grid grid-cols-3 2xl:grid-cols-5">
-	<div class="col-span-3 2xl:col-span-2 p-8 space-y-10">
+<div class="container mx-auto grid lg:grid-cols-4 2xl:grid-cols-7">
+	<div class="lg:col-span-2 2xl:col-span-3 p-8 space-y-10">
 		<div class="space-y-4">
 			<MyItems />
 		</div>
@@ -152,7 +152,7 @@
 			</svelte:fragment>
 		</TabGroup>
 	</div>
-	<div class="col-span-3 2xl:col-span-3">
+	<div class="lg:col-span-2 2xl:col-span-4">
 		<div class="p-8">
 			{#if !$session}
 				<div class="p-4 space-y-4">

@@ -47,13 +47,13 @@
 <AppShell
 	regionPage="relative"
 	slotPageHeader="sticky top-0 z-10 shadow-lg"
-	slotSidebarLeft="bg-surface-500/5 w-0 lg:w-64 bg-surface-100-800-token shadow-xl"
+	slotSidebarLeft="bg-surface-500/5 w-0 xl:w-64 bg-surface-100-800-token shadow-xl"
 >
 	<svelte:fragment slot="pageHeader">
 		<AppBar gridColumns="grid-cols-3" slotDefault="place-self-center" slotTrail="place-content-end">
 			<svelte:fragment slot="lead">
 				<div class="flex items-center">
-					<button class="lg:hidden btn btn-sm mr-4" on:click={drawerOpen}>
+					<button class="xl:hidden btn btn-sm mr-4" on:click={drawerOpen}>
 						<span>
 							<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
 								<rect width="100" height="20" />

@@ -101,12 +101,11 @@
 				</td>
 			</tr>
 			<tr>
-				<th class="text-center">
+				<th class="text-center table-cell-fit">
 					<input type="checkbox" checked={$selectingAll} on:change={selectAll} />
 				</th>
+				<th class="table-cell-fit">{$t('common.itemname')}</th>
 				<th class="text-center">{$t('common.bound')}</th>
-				<th>{$t('common.itemname')}</th>
-				<th class="text-center">{$t('common.date')}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -124,17 +123,14 @@
 							/>
 						{/if}
 					</td>
+					<td>
+						<p class="text-lg font-mono">{Bytes.from(drop.seed.byteArray)}</p>
+						<p class="text-xs font-mono">{drop.created}</p>
+					</td>
 					<td class="flex justify-center items-center">
 						{#if drop.bound}
 							<Lock />
 						{/if}
-					</td>
-					<td>
-						<p class="text-lg font-mono">{Bytes.from(drop.seed.byteArray)}</p>
-						<p class="text-xs font-mono">{drop.seed}</p>
-					</td>
-					<td class="text-center">
-						{drop.created}
 					</td>
 				</tr>
 			{/each}

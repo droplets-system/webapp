@@ -7,7 +7,6 @@
 		Serializer,
 		type TransactResult,
 		UInt64,
-		type TransactResultReturnType,
 		type TransactResultReturnValue
 	} from '@wharfkit/session';
 	import { onDestroy, onMount } from 'svelte';
@@ -37,6 +36,20 @@
 	const ramPrice = writable(0);
 	const dropsPrice: Writable<number> = writable();
 
+	// Form and processing
+	const createBound = writable(true);
+	const dropsAmount: Writable<number> = writable();
+	const customDropsAmount: Writable<boolean> = writable(true);
+	const customDropsValue: Writable<number> = writable(10000);
+	const lastResult: Writable<DropsContract.Types.generate_return_value | undefined> = writable();
+	const lastResultId: Writable<string | undefined> = writable();
+	const lastResultError: Writable<string> = writable();
+	const transacting: Writable<boolean> = writable(false);
+	const transactBatchSize: Writable<number> = writable(0);
+	const transactBatchProgress: Writable<number> = writable(0);
+
+	const devmode = $page.url.searchParams.has('dev');
+
 	const accountContractBalance: Writable<DropsContract.Types.balances_row> = writable();
 	const accountContractDrops = derived(accountContractBalance, ($accountContractBalance) =>
 		$accountContractBalance ? Number($accountContractBalance.drops) : 0
@@ -44,20 +57,6 @@
 	const accountContractRam = derived(accountContractBalance, ($accountContractBalance) =>
 		$accountContractBalance ? Number($accountContractBalance.ram_bytes) : 0
 	);
-
-	const dropsAmount: Writable<number> = writable(10);
-	const customDropsAmount: Writable<boolean> = writable(false);
-	const customDropsValue: Writable<number> = writable();
-
-	const lastResult: Writable<DropsContract.Types.generate_return_value | undefined> = writable();
-	const lastResultId: Writable<string | undefined> = writable();
-	const lastResultError: Writable<string> = writable();
-
-	const transacting: Writable<boolean> = writable(false);
-	const transactBatchSize: Writable<number> = writable(0);
-	const transactBatchProgress: Writable<number> = writable(0);
-
-	const devmode = $page.url.searchParams.has('dev');
 
 	const derivedDropsAmount: Readable<number> = derived(
 		[dropsAmount, customDropsAmount, customDropsValue],
