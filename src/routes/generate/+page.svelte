@@ -262,17 +262,27 @@
 				<div>
 					<p>{$t('generate.selectbound')}</p>
 					<RadioGroup>
-						<RadioItem bind:group={$createBound} name="justify" value={true}
+						<RadioItem bind:group={$createBound} name="justify" value={true} disabled={$transacting}
 							>{$t('common.bound')}</RadioItem
 						>
-						<RadioItem bind:group={$createBound} name="justify" value={false}
-							>{$t('common.unbound')}</RadioItem
+						<RadioItem
+							bind:group={$createBound}
+							name="justify"
+							value={false}
+							disabled={$transacting}
 						>
+							{$t('common.unbound')}
+						</RadioItem>
 					</RadioGroup>
 				</div>
 				<label class="label">
 					<span>{$t('generate.togenerate')}</span>
-					<select class="select" on:change={selectDropAmount} value={$dropsAmount}>
+					<select
+						class="select"
+						on:change={selectDropAmount}
+						value={$dropsAmount}
+						disabled={$transacting}
+					>
 						{#each [1, 10, 100, 1000, 5000, 'X'] as amount}
 							<option value={amount}>+ {amount.toLocaleString()} {$t('common.itemnames')}</option>
 						{/each}
@@ -284,6 +294,7 @@
 						<input
 							class="input"
 							class:input-error={!$hasEnoughTokens}
+							disabled={$transacting}
 							type="text"
 							bind:value={$customDropsValue}
 						/>
