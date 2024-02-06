@@ -1,9 +1,8 @@
-import { ramPrice, ramPricePlusFee } from '$lib/bancor';
+import { ramPricePlusFee } from '$lib/bancor';
 import { ramPurchaseBuffer, sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
 import {
 	DropsContract,
 	accountContractRam,
-	accountContractBalance,
 	accountRamBalance,
 	accountTokenBalance
 } from '$lib/wharf';

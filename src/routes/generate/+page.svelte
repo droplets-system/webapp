@@ -26,10 +26,9 @@
 		systemContract,
 		tokenContract
 	} from '$lib/wharf';
-	import { loadRamPrice, ramPrice, ramPricePlusFee } from '$lib/bancor';
+	import { loadRamPrice } from '$lib/bancor';
 	import { maximumBatchSize, sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
 	import {
-		accountBalanceToUse,
 		lastResultError,
 		hasEnoughContractRAM,
 		transacting,
@@ -69,7 +68,6 @@
 	const actionRequiresSessionKey = derived(
 		[derivedDropsAmount, sessionKey],
 		([$derivedDropsAmount, $sessionKey]) => {
-			return false;
 			return $derivedDropsAmount > maximumBatchSize && !$sessionKey;
 		}
 	);
