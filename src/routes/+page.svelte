@@ -61,11 +61,6 @@
 			<a href="https://github.com/EOSIO/eosio.system/issues/30">{$t('home.q6p5b')}</a>
 			{$t('home.q6p5c')}
 		</p>
-		<h2>{$t('home.q7')}</h2>
-		<p>{$t('home.q7p1')}</p>
-		<p>{$t('home.q7p2')}</p>
-		<h2>{$t('home.q8')}</h2>
-		<p>{$t('home.q8p1')}</p>
 		<h2>{$t('home.more')}</h2>
 		<p>{$t('home.morep1')}</p>
 		<p>{$t('home.morep2')}</p>
