@@ -64,7 +64,7 @@ export const epochContract: EpochContract = new EpochContract({ client });
 
 export const sessionKit = new SessionKit(
 	{
-		appName: 'Drops',
+		appName: 'drops',
 		chains: [chain],
 		ui: new WebRenderer({ minimal: true }),
 		walletPlugins
