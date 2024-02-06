@@ -84,6 +84,9 @@
 			transactBatchSize.set(batchSizes.length);
 			for (const batchSize of batchSizes) {
 				await mint(batchSize, amount);
+				if ($lastResultError) {
+					break;
+				}
 				transactBatchProgress.update((p) => p + 1);
 				if ($transactBatchProgress < $transactBatchSize) {
 					await new Promise((r) => setTimeout(r, 500));
