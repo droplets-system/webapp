@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { writable, type Writable } from 'svelte/store';
 	import { AlertCircle, Combine, Lock, PackageX, Unlock } from 'svelte-lucide';
 	import { Serializer, UInt64 } from '@wharfkit/session';
@@ -14,10 +13,7 @@
 	import DropTransfer from '$lib/components/drops/transfer.svelte';
 
 	import { DropsContract, session, dropsContract } from '$lib/wharf';
-	import { getRamPrice, getRamPriceMinusFee } from '$lib/bancor';
-	import { sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
 	import type { TableRowCursor } from '@wharfkit/contract';
-	import { epochNumber } from '$lib/epoch';
 
 	const loaded = writable(false);
 	const selected: Writable<Record<string, boolean>> = writable({});
@@ -30,30 +26,7 @@
 	const dropsFound = writable(0);
 	const dropsClaimed = writable(0);
 
-	session.subscribe(() => {
-		loaddrops();
-	});
-
-	// let accountLoader: ReturnType<typeof setInterval>;
-	let ramLoader: ReturnType<typeof setInterval>;
-
-	onMount(async () => {
-		loadRamPrice();
-		ramLoader = setInterval(loadRamPrice, 2000);
-	});
-
-	const dropsPrice = writable(0);
-	const dropsPricePlusFee = writable(0);
-	async function loadRamPrice() {
-		const cost_minus_fee = await getRamPriceMinusFee();
-		if (cost_minus_fee) {
-			dropsPrice.set(Number(cost_minus_fee) * sizeDropRow);
-		}
-		const cost_plus_fee = await getRamPrice();
-		if (cost_plus_fee) {
-			dropsPricePlusFee.set(Number(cost_plus_fee) * sizeDropRowPurchase + 1);
-		}
-	}
+	session.subscribe(() => loaddrops());
 
 	async function loaddrops() {
 		if ($session) {
@@ -106,7 +79,7 @@
 		selectingAll.set(false);
 	}
 
-	let tabSet: number = 2;
+	let tabSet: number = 4;
 </script>
 
 <div class="container mx-auto grid lg:grid-cols-4 2xl:grid-cols-7">
@@ -143,11 +116,11 @@
 				{#if tabSet === 1}
 					<DropTransfer {drops} {selected} {selectingAll} />
 				{:else if tabSet === 2}
-					<DropDestroy {drops} {dropsPrice} {selected} {selectingAll} />
+					<DropDestroy {drops} {selected} {selectingAll} />
 				{:else if tabSet === 3}
-					<DropBind {drops} {dropsPrice} {selected} {selectingAll} />
+					<DropBind {drops} {selected} {selectingAll} />
 				{:else if tabSet === 4}
-					<DropUnbind {drops} {dropsPricePlusFee} {selected} {selectingAll} />
+					<DropUnbind {drops} {selected} {selectingAll} />
 				{/if}
 			</svelte:fragment>
 		</TabGroup>
@@ -191,7 +164,15 @@
 					<DropsTable {drops} {selected} {selectingAll} />
 				</div>
 			{:else}
-				<p>{$t('inventory.none')}</p>
+				<div class="p-4 space-y-4">
+					<aside class="alert variant-filled-warning">
+						<div><AlertCircle /></div>
+						<div class="alert-message">
+							<h3 class="h3">{$t('inventory.none', { itemnames: $t('common.itemnames') })}</h3>
+						</div>
+						<div class="alert-actions"></div>
+					</aside>
+				</div>
 			{/if}
 		</div>
 	</div>

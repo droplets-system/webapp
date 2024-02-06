@@ -12,7 +12,6 @@
 
 	const dropPrice: Writable<number> = writable();
 
-	let ramPriceInterval: ReturnType<typeof setInterval>;
 	let dropsCountInterval: ReturnType<typeof setInterval>;
 
 	const epochStats: Writable<DropsContract.Types.stat_row[]> = writable([]);
@@ -34,14 +33,11 @@
 	);
 
 	onMount(async () => {
-		loadRamPrice();
 		loadDropCounts();
-		ramPriceInterval = setInterval(loadRamPrice, 2000);
 		dropsCountInterval = setInterval(loadDropCounts, 5000);
 	});
 
 	onDestroy(() => {
-		clearInterval(ramPriceInterval);
 		clearInterval(dropsCountInterval);
 	});
 
@@ -65,16 +61,6 @@
 		const ib = inp_reserve.units;
 		let inp = ib.multiplying(out).dividing(ob.subtracting(out));
 		return inp;
-	}
-
-	async function loadRamPrice() {
-		const result = await systemContract.table('rammarket').get();
-		if (result) {
-			const { base, quote } = result;
-			const cost = get_bancor_input(base.balance, quote.balance, 2810000);
-			const cost_plus_fee = Number(cost) / 0.995;
-			dropPrice.set(cost_plus_fee / 10000);
-		}
 	}
 </script>
 

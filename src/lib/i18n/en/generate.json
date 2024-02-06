@@ -1,16 +1,10 @@
 {
-	"costbreakdown": "Cost Breakdown",
 	"enteramount": "Enter the amount to generate",
-	"generatedropsepoch": "{{itemnames}} generated in epoch {{epoch}}",
-	"generateitemnamesepoch": "{{itemnames}} in epoch",
-	"headereos": "Use EOS tokens to purchase RAM from the blockchain and generate unbound {{itemnames}}.",
-	"headerram": "Use available account RAM balance to generate bound {{itemnames}}.",
+	"selectbound": "Select bound vs unbound",
+	"description": "Generate bound {{itemnames}} using your own RAM or unbound drops using tokens.",
 	"ramcost": "RAM Cost",
-	"ramepoch": "RAM Epoch",
-	"ramsignup": "RAM Sign-up",
-	"ramstorage": "RAM Storage",
 	"signinfirst": "You must be signed in to generate {{itemnames}}.",
 	"togenerate": "Number of {{itemnames}} to generate",
-	"useeos": "Use EOS",
-	"useram": "Use RAM"
+	"reqsk": "Requires a Session Key",
+	"reqskdesc": "In order to generate more than {{max}} {{itemnames}} automatically you must configure a Session Key. Go into Settings and click Enable Session Key to enable this feature."
 }

@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { initializeStores, Drawer, getDrawerStore } from '@skeletonlabs/skeleton';
+	import { onDestroy, onMount } from 'svelte';
+	import { initializeStores, Drawer, getDrawerStore, Modal } from '@skeletonlabs/skeleton';
 	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
 
 	import { setLocale, t } from '$lib/i18n';
 	import { login, session, restore } from '$lib/wharf';
+
+	import GenerateHelp from '$lib/components/modals/GenerateHelp.svelte';
+	import SessionKey from '$lib/components/modals/SessionKey.svelte';
 
 	import '../app.postcss';
 
@@ -13,6 +16,7 @@
 	const drawerStore = getDrawerStore();
 
 	import Navigation from '$lib/components/navigation/navigation.svelte';
+	import { loadRamPrice } from '$lib/bancor';
 
 	function getLanguage(name: string) {
 		const value = document.cookie;
@@ -27,15 +31,30 @@
 		return 'en';
 	}
 
+	let ramLoader: ReturnType<typeof setInterval>;
+
+	onDestroy(() => {
+		clearInterval(ramLoader);
+	});
+
 	onMount(async () => {
-		setLocale(getLanguage('lang'));
 		restore();
+		setLocale(getLanguage('lang'));
+		loadRamPrice();
+		ramLoader = setInterval(loadRamPrice, 5000);
 	});
 
 	function drawerOpen(): void {
 		drawerStore.open({});
 	}
+
+	const modalRegistry = {
+		generateHelp: { ref: GenerateHelp },
+		sessionKey: { ref: SessionKey }
+	};
 </script>
+
+<Modal components={modalRegistry} />
 
 <Drawer class="shadow-xl">
 	<img src="/logo.png" class="w-48 px-6 py-4" />

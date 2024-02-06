@@ -63,11 +63,9 @@
 					paginatedSource.forEach((s) => (current[String(s.seed)] = true));
 					return current;
 				});
-				console.log('selected complete');
 			} else {
 				selectingAll.set(false);
 				selected.set({});
-				console.log('selected complete');
 			}
 		}
 	}

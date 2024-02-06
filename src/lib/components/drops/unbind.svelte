@@ -1,22 +1,30 @@
 <script lang="ts">
 	import { derived, writable, type Readable, type Writable } from 'svelte/store';
 	import { AlertCircle } from 'svelte-lucide';
-	import { Asset, Serializer, type TransactResult } from '@wharfkit/session';
+	import { Asset, Int64, Serializer, type TransactResult } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropsContract, session, dropsContract, tokenContract } from '$lib/wharf';
-	import { sizeDropRow } from '$lib/constants';
+	import {
+		DropsContract,
+		session,
+		sessionKey,
+		dropsContract,
+		tokenContract,
+		accountContractRam,
+		loadAccountData
+	} from '$lib/wharf';
+	import { sizeDropRowPurchase } from '$lib/constants';
+	import { dropsPricePlusFee, ramPricePlusFee } from '$lib/bancor';
 
 	const unbinding = writable(false);
 	export let drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
-	export let dropsPricePlusFee: Writable<number> = writable(0);
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean> = writable(false);
 
 	interface UnbindResult {
 		unbound: number;
 		cost: Asset;
-		refund: Asset;
+		ram_released: Int64;
 		txid: string;
 	}
 
@@ -52,8 +60,41 @@
 	);
 
 	const estimatedRAM = derived(numBoundSelected, ($numBoundSelected) => {
-		return sizeDropRow * $numBoundSelected;
+		return sizeDropRowPurchase * $numBoundSelected;
 	});
+
+	const contractBalanceToUse: Readable<number> = derived(
+		[accountContractRam, estimatedRAM],
+		([$accountContractRam, $estimatedRAM]) => {
+			const canCoverAll = $accountContractRam >= $estimatedRAM;
+			return $accountContractRam ? (canCoverAll ? $estimatedRAM : $accountContractRam) : 0;
+		}
+	);
+
+	const accountRamPurchaseAmount: Readable<number> = derived(
+		[contractBalanceToUse, estimatedRAM],
+		([$contractBalanceToUse, $estimatedRAM]) => {
+			return $estimatedRAM - $contractBalanceToUse;
+		}
+	);
+
+	const accountRamPurchasePrice: Readable<Asset> = derived(
+		[accountRamPurchaseAmount, ramPricePlusFee],
+		([$accountRamPurchaseAmount, $ramPricePlusFee]) => {
+			let amount = $accountRamPurchaseAmount * $ramPricePlusFee;
+			if (amount <= 2) {
+				amount = 3;
+			}
+			return Asset.fromUnits(amount, '4,EOS');
+		}
+	);
+
+	const requiresDeposit = derived(
+		[accountContractRam, estimatedRAM],
+		([$accountContractRam, $estimatedRAM]) => {
+			return $accountContractRam < $estimatedRAM;
+		}
+	);
 
 	const lastUnbindResult: Writable<UnbindResult | undefined> = writable();
 	const lastUnbindError = writable();
@@ -62,33 +103,40 @@
 		unbinding.set(true);
 		lastUnbindError.set(undefined);
 		if ($session) {
-			const unbind = dropsContract.action('unbind', {
-				owner: $session?.actor,
-				drops_ids: Object.keys($selected)
-			});
-			const quantity = $dropsPricePlusFee * Object.keys($selected).length;
-			const transfer = tokenContract.action('transfer', {
-				from: $session?.actor,
-				to: 'seed.gm',
-				quantity: Asset.fromUnits(quantity, '4,EOS'),
-				memo: 'unbind'
-			});
+			const actions = [];
+			actions.push(
+				dropsContract.action('unbind', {
+					owner: $session?.actor,
+					drops_ids: Object.keys($selected)
+				})
+			);
+
+			if ($requiresDeposit) {
+				actions.unshift(
+					tokenContract.action('transfer', {
+						from: $session.actor,
+						to: 'drops',
+						quantity: $accountRamPurchasePrice,
+						memo: String($session.actor)
+					})
+				);
+			}
 
 			let result: TransactResult;
 			try {
-				result = await $session.transact({
-					actions: [unbind, transfer]
-				});
-
-				unbinding.set(false);
+				if ($sessionKey) {
+					result = await $session.localTransact({ actions });
+				} else {
+					result = await $session.transact({ actions });
+				}
 
 				result.returns.forEach((returnValue) => {
-					const data = Serializer.decode({
-						data: returnValue.hex,
-						type: DropsContract.Types.generate_return_value
-					});
+					if (returnValue.action.equals('unbind')) {
+						const ram_released = Serializer.decode({
+							data: returnValue.hex,
+							type: Int64
+						});
 
-					if (Number(data.cost.value) > 0) {
 						// Refresh drops that were unbound
 						const dropsUnbound = Object.keys($selected).map((s) => String(s));
 						drops.update((current) => {
@@ -104,17 +152,18 @@
 
 						lastUnbindResult.set({
 							unbound: dropsUnbound.length,
-							cost: data.cost,
-							refund: data.refund,
+							cost: $accountRamPurchasePrice,
+							ram_released,
 							txid: String(result.resolved?.transaction.id)
 						});
 					}
 				});
 			} catch (e) {
-				unbinding.set(false);
 				lastUnbindResult.set(undefined);
 				lastUnbindError.set(e);
 			}
+			unbinding.set(false);
+			setTimeout(loadAccountData, 1000);
 		}
 	}
 </script>
@@ -136,10 +185,18 @@
 						<th>{$t('inventory.ramtorelease')}</th>
 						<td>{$estimatedRAM} bytes</td>
 					</tr>
-					<tr>
-						<th>{$t('inventory.ramtobuy')}</th>
-						<td>{Asset.fromUnits($estimatedEOS, '4,EOS')}</td>
-					</tr>
+					{#if $requiresDeposit}
+						<tr>
+							<th>{$t('inventory.ramtobuy')}</th>
+							<td>{$accountRamPurchasePrice}</td>
+						</tr>
+					{/if}
+					{#if $contractBalanceToUse > 0}
+						<tr>
+							<th>{$t('inventory.rambalanceuse')}</th>
+							<td>{$contractBalanceToUse} bytes</td>
+						</tr>
+					{/if}
 				{/if}
 				{#if !$isBoundSelected && !$isUnboundSelected}
 					<tr>
@@ -210,14 +267,12 @@
 						>
 						<td>{$lastUnbindResult.unbound}</td>
 					</tr>
-					<tr>
-						<td class="text-right">{$t('inventory.ramtobuy')}</td>
-						<td>{$lastUnbindResult.cost}</td>
-					</tr>
-					<tr>
-						<td class="text-right">{$t('common.overpaymentrefund')}</td>
-						<td>{$lastUnbindResult.refund}</td>
-					</tr>
+					{#if $lastUnbindResult.cost && $lastUnbindResult.cost.value > 0}
+						<tr>
+							<td class="text-right">{$t('inventory.ramtobuy')}</td>
+							<td>{$lastUnbindResult.cost}</td>
+						</tr>
+					{/if}
 				</tbody>
 			</table>
 		</div>

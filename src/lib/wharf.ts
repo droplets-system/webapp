@@ -1,6 +1,15 @@
-import { AccountKit } from '@wharfkit/account';
+import { Account, AccountKit } from '@wharfkit/account';
 import ContractKit from '@wharfkit/contract';
-import SessionKit, { APIClient, Chains, Session } from '@wharfkit/session';
+import SessionKit, {
+	APIClient,
+	Asset,
+	Chains,
+	Name,
+	PrivateKey,
+	Session,
+	type TransactArgs,
+	type TransactOptions
+} from '@wharfkit/session';
 import { TransactPluginResourceProvider } from '@wharfkit/transact-plugin-resource-provider';
 import { WalletPluginAnchor } from '@wharfkit/wallet-plugin-anchor';
 import { WalletPluginPrivateKey } from '@wharfkit/wallet-plugin-privatekey';
@@ -9,7 +18,7 @@ import { WalletPluginTokenPocket } from '@wharfkit/wallet-plugin-tokenpocket';
 import { WalletPluginWombat } from '@wharfkit/wallet-plugin-wombat';
 import WebRenderer from '@wharfkit/web-renderer';
 
-import { writable, type Writable } from 'svelte/store';
+import { derived, writable, type Readable, type Writable, get } from 'svelte/store';
 import { PUBLIC_CHAIN_NAME, PUBLIC_LOCAL_SIGNER } from '$env/static/public';
 
 import { Contract as SystemContract } from './contracts/eosio';
@@ -22,6 +31,7 @@ import { Contract as DropsContract } from './contracts/drops';
 export * as DropsContract from './contracts/drops';
 
 import { Contract as EpochContract } from './contracts/epoch.drops';
+import { safeActions } from './constants';
 export * as EpochContract from './contracts/epoch.drops';
 
 export const chain = Chains[PUBLIC_CHAIN_NAME];
@@ -64,19 +74,121 @@ export const sessionKit = new SessionKit(
 	}
 );
 
-export const session: Writable<Session | undefined> = writable();
+export const walletSession: Writable<Session | undefined> = writable();
+
+const stored = localStorage.getItem('sessionKey');
+const storedKey = stored ? PrivateKey.from(stored) : undefined;
+export const sessionKey: Writable<PrivateKey | undefined> = writable(storedKey);
+
+const sessionKeyWallet: Readable<WalletPluginPrivateKey | undefined> = derived(
+	sessionKey,
+	($sessionKey) => {
+		if ($sessionKey) {
+			return new WalletPluginPrivateKey($sessionKey);
+		}
+	}
+);
+
+export const localSession: Readable<Session | undefined> = derived(
+	[walletSession, sessionKeyWallet],
+	([$walletSession, $sessionKeyWallet]) => {
+		if ($walletSession && $sessionKeyWallet) {
+			return new Session({
+				actor: $walletSession.actor,
+				chain: $walletSession.chain,
+				permission: 'dropssession',
+				walletPlugin: $sessionKeyWallet
+			});
+		}
+	}
+);
+
+export async function localTransact(args: TransactArgs, options: TransactOptions = {}) {
+	let valid = true;
+	args.actions?.forEach((action) => {
+		if (!Name.from('drops').equals(action.account) || !safeActions.includes(String(action.name))) {
+			valid = false;
+		}
+	});
+	if (valid) {
+		const local = get(localSession);
+		return local?.transact(args, options);
+	} else {
+		const wallet = get(walletSession);
+		return wallet?.transact(args, options);
+	}
+}
+
+export const session: Readable<Session | undefined> = derived(
+	[localSession, walletSession],
+	([$localSession, $walletSession]) => {
+		if ($walletSession) {
+			if ($localSession) {
+				$walletSession.localTransact = localTransact;
+			}
+			return $walletSession;
+		}
+	}
+);
+
+session.subscribe(() => {
+	loadAccountData();
+});
 
 export async function login() {
 	const result = await sessionKit.login();
-	session.set(result.session);
+	walletSession.set(result.session);
 }
 
 export async function logout() {
 	await sessionKit.logout();
-	session.set(undefined);
+	walletSession.set(undefined);
 }
 
 export async function restore() {
 	const restored = await sessionKit.restore();
-	session.set(restored);
+	walletSession.set(restored);
+}
+
+export const account: Readable<Account | undefined> = derived(session, ($session, set) => {
+	if ($session) {
+		accountKit.load($session.actor).then((account) => set(account));
+	}
+});
+
+export const accountRamBalance: Writable<number> = writable();
+export const accountTokenBalance: Writable<Asset> = writable();
+
+export const accountContractBalance: Writable<DropsContract.Types.balances_row> = writable();
+export const accountContractDrops = derived(accountContractBalance, ($accountContractBalance) =>
+	$accountContractBalance ? Number($accountContractBalance.drops) : 0
+);
+export const accountContractRam = derived(accountContractBalance, ($accountContractBalance) =>
+	$accountContractBalance ? Number($accountContractBalance.ram_bytes) : 0
+);
+
+export async function loadAccountData() {
+	await loadAccountBalances();
+	await loadBalanceRow();
+}
+
+export async function loadAccountBalances() {
+	const currentSession = get(session);
+	if (currentSession) {
+		const result = await accountKit.load(currentSession.actor);
+		accountRamBalance.set(Number(result.resource('ram').available));
+		if (result.data.core_liquid_balance) {
+			accountTokenBalance.set(result.data.core_liquid_balance);
+		}
+	}
+}
+
+export async function loadBalanceRow() {
+	const currentSession = get(session);
+	if (currentSession) {
+		const results = await dropsContract.table('balances').get(currentSession.actor);
+		if (results) {
+			accountContractBalance.set(results);
+		}
+	}
 }

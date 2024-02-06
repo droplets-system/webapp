@@ -3,3 +3,5 @@ export const sizeDropRowPurchase = sizeDropRow + 2;
 export const sizeAccountRow = 124;
 export const sizeStatRow = 412;
 export const maximumBatchSize = 5000;
+
+export const safeActions = ['bind', 'claim', 'generate', 'unbind'];

@@ -3,279 +3,68 @@
 		Asset,
 		Bytes,
 		Checksum256,
-		Name,
 		Serializer,
 		type TransactResult,
-		UInt64,
 		type TransactResultReturnValue
 	} from '@wharfkit/session';
-	import { onDestroy, onMount } from 'svelte';
-	import { derived, writable, type Readable, type Writable } from 'svelte/store';
-	import { page } from '$app/stores';
+	import { RadioGroup, RadioItem, type ModalSettings, getModalStore } from '@skeletonlabs/skeleton';
 	import { AlertCircle, Loader2, MemoryStick, PackagePlus } from 'svelte-lucide';
+	import { page } from '$app/stores';
+
+	import { t } from '$lib/i18n';
 	import {
 		DropsContract,
-		accountKit,
+		accountContractBalance,
+		accountContractDrops,
+		accountContractRam,
+		accountRamBalance,
+		accountTokenBalance,
 		dropsContract,
+		loadAccountData,
 		session,
+		sessionKey,
 		systemContract,
 		tokenContract
 	} from '$lib/wharf';
-	import { getRamPrice } from '$lib/bancor';
+	import { loadRamPrice, ramPrice, ramPricePlusFee } from '$lib/bancor';
 	import { maximumBatchSize, sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
-	import { t } from '$lib/i18n';
-	import { epochNumber } from '$lib/epoch';
-	import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
+	import {
+		lastResultError,
+		transacting,
+		transactBatchSize,
+		transactBatchProgress,
+		lastResultId,
+		lastResult,
+		customDropsAmount,
+		dropsAmount,
+		derivedDropsAmount,
+		createBound,
+		totalRamRequired,
+		customDropsValue,
+		hasEnoughTokens,
+		useRandomDrop,
+		randomDrop,
+		totalPrice,
+		totalRamCreditsToUse,
+		canGenerate,
+		randomName
+	} from './generate';
 
-	const useRandomDrop: Writable<boolean> = writable(true);
-	const randomDrop: Writable<Name> = writable(randomName());
+	import DevTools from './devtools.svelte';
+	import { derived } from 'svelte/store';
 
-	const accountRamBalance: Writable<number> = writable();
-	const accountTokenBalance: Writable<Asset> = writable();
+	export const modalStore = getModalStore();
+	export const devmode = $page.url.searchParams.has('dev');
+	export const batch = Number($page.url.searchParams.get('batch'));
+	const maxPerTransaction = batch || maximumBatchSize;
 
-	const ramPrice = writable(0);
-	const dropsPrice: Writable<number> = writable();
-
-	// Form and processing
-	const createBound = writable(true);
-	const dropsAmount: Writable<number> = writable(1);
-	const customDropsAmount: Writable<boolean> = writable(false);
-	const customDropsValue: Writable<number> = writable();
-	const lastResult: Writable<DropsContract.Types.generate_return_value | undefined> = writable();
-	const lastResultId: Writable<string | undefined> = writable();
-	const lastResultError: Writable<string> = writable();
-	const transacting: Writable<boolean> = writable(false);
-	const transactBatchSize: Writable<number> = writable(0);
-	const transactBatchProgress: Writable<number> = writable(0);
-
-	const devmode = $page.url.searchParams.has('dev');
-
-	const accountContractBalance: Writable<DropsContract.Types.balances_row> = writable();
-	const accountContractDrops = derived(accountContractBalance, ($accountContractBalance) =>
-		$accountContractBalance ? Number($accountContractBalance.drops) : 0
-	);
-	const accountContractRam = derived(accountContractBalance, ($accountContractBalance) =>
-		$accountContractBalance ? Number($accountContractBalance.ram_bytes) : 0
-	);
-
-	const derivedDropsAmount: Readable<number> = derived(
-		[dropsAmount, customDropsAmount, customDropsValue],
-		([$dropsAmount, $customDropsAmount, $customDropsValue]) => {
-			if ($customDropsAmount) {
-				if ($customDropsValue) {
-					return Number($customDropsValue);
-				} else {
-					return 0;
-				}
-			} else {
-				return $dropsAmount;
-			}
+	const actionRequiresSessionKey = derived(
+		[derivedDropsAmount, sessionKey],
+		([$derivedDropsAmount, $sessionKey]) => {
+			console.log($derivedDropsAmount, $sessionKey);
+			return $derivedDropsAmount > maximumBatchSize && !$sessionKey;
 		}
 	);
-
-	const createBound = writable(true);
-
-	const totalRamRequired: Readable<number> = derived(
-		[createBound, derivedDropsAmount, accountContractRam],
-		([$createBound, $derivedDropsAmount, $accountContractRam]) => {
-			if ($derivedDropsAmount) {
-				/*
-				 * If the account has enough of a RAM balance to cover the cost of minting, then we can use the actual
-				 * size of the drop row as the RAM requirement using `sizeDropRow`.
-				 *
-				 * If the account does not have enough RAM balance to cover the cost of minting, then we need to use the
-				 * size of the drop row as the RAM requirement using `sizeDropRowPurchase`. This adds additional RAM as a
-				 * purchase buffer to prevent rounding errors that happen in the bancor algorithm.
-				 */
-				const ramRequiredWithBalance = $derivedDropsAmount * sizeDropRow;
-				if (!$createBound && $accountContractRam < ramRequiredWithBalance) {
-					const ramRequiredWithoutBalance = $derivedDropsAmount * sizeDropRowPurchase;
-					return ramRequiredWithoutBalance;
-				} else {
-					return ramRequiredWithBalance;
-				}
-			}
-			return 0;
-		}
-	);
-
-	// The amount of RAM needed to complete the transaction
-	// totalRamToPurchase = totalRamRequired - accountContractBalance.ram_bytes
-	const totalRamToPurchase: Readable<number> = derived(
-		[createBound, totalRamRequired, accountContractRam],
-		([$createBound, $totalRamRequired, $accountContractRam]) => {
-			console.log('total', $totalRamRequired);
-			if (!$createBound && $totalRamRequired && $totalRamRequired > $accountContractRam) {
-				if ($accountContractRam) {
-					return $totalRamRequired - $accountContractRam;
-				} else {
-					return $totalRamRequired;
-				}
-			}
-			return 0;
-		}
-	);
-
-	const totalRamCreditsToUse: Readable<number> = derived(
-		[createBound, totalRamRequired, accountContractBalance],
-		([$createBound, $totalRamRequired, $accountContractBalance]) => {
-			if (!$createBound && $totalRamRequired && $accountContractBalance) {
-				if ($totalRamRequired > Number($accountContractBalance.ram_bytes)) {
-					return Number($accountContractBalance.ram_bytes);
-				} else {
-					return $totalRamRequired;
-				}
-			}
-			return 0;
-		}
-	);
-
-	const totalPrice: Readable<number> = derived(
-		[ramPrice, totalRamToPurchase],
-		([$ramPrice, $totalRamToPurchase]) => {
-			console.log($ramPrice, $totalRamToPurchase);
-			return $ramPrice * $totalRamToPurchase;
-		}
-	);
-
-	const hasEnoughRAM: Readable<boolean> = derived(
-		[accountRamBalance, totalRamToPurchase],
-		([$accountRamBalance, $totalRamToPurchase]) => {
-			if ($accountRamBalance >= 0 && $totalRamToPurchase >= 0) {
-				return $accountRamBalance >= $totalRamToPurchase;
-			}
-			return false;
-		}
-	);
-
-	const hasEnoughTokens: Readable<boolean> = derived(
-		[accountTokenBalance, totalPrice],
-		([$accountTokenBalance, $totalPrice]) => {
-			if ($accountTokenBalance && $accountTokenBalance) {
-				return Number($accountTokenBalance.units) > $totalPrice;
-			}
-			return false;
-		}
-	);
-
-	const canGenerate: Readable<boolean> = derived(
-		[createBound, derivedDropsAmount, hasEnoughRAM, hasEnoughTokens, transacting],
-		([$createBound, $derivedDropsAmount, $hasEnoughRAM, $hasEnoughTokens, $transacting]) => {
-			const general = $derivedDropsAmount > 0 && !$transacting;
-			if ($createBound) {
-				return general && $hasEnoughRAM;
-			} else {
-				return general && $hasEnoughTokens;
-			}
-		}
-	);
-
-	let ramLoader: ReturnType<typeof setInterval>;
-
-	onMount(async () => {
-		loadRamPrice();
-		ramLoader = setInterval(loadRamPrice, 2000);
-	});
-
-	onDestroy(() => {
-		clearInterval(ramLoader);
-	});
-
-	epochNumber.subscribe(() => {
-		loadAccountData();
-	});
-
-	session.subscribe(() => {
-		loadAccountData();
-	});
-
-	async function loadAccountData() {
-		await loadAccountBalances();
-		await loadBalanceRow();
-	}
-
-	async function loadBalanceRow() {
-		if ($session) {
-			const results = await dropsContract.table('balances').get($session.actor);
-			console.log(results);
-			if (results) {
-				accountContractBalance.set(results);
-			}
-		}
-	}
-
-	async function loadAccountBalances() {
-		if ($session) {
-			const result = await accountKit.load($session.actor);
-			accountRamBalance.set(Number(result.resource('ram').available));
-			if (result.data.core_liquid_balance) {
-				accountTokenBalance.set(result.data.core_liquid_balance);
-			}
-		}
-	}
-
-	async function loadRamPrice() {
-		const cost_plus_fee = await getRamPrice();
-		ramPrice.set(Number(cost_plus_fee));
-		if (cost_plus_fee) {
-			dropsPrice.set(Number(cost_plus_fee) * sizeDropRowPurchase);
-		}
-	}
-
-	function randomName(): Name {
-		const length = 12;
-		const chars = 'abcdefghijklmnopqrstuvwxyz12345';
-		let drops = '';
-		for (var i = 0; i < length; i++) {
-			drops += chars.charAt(Math.floor(Math.random() * chars.length));
-		}
-		return Name.from(drops);
-	}
-
-	async function claim() {
-		if ($session) {
-			const action = dropsContract.action('claim', {
-				owner: $session.actor,
-				sell_ram: true
-			});
-			await $session.transact({ action });
-			setTimeout(loadAccountBalances, 1000);
-			setTimeout(loadBalanceRow, 1000);
-		}
-	}
-
-	async function deposit() {
-		const action = tokenContract.action('transfer', {
-			from: $session.actor,
-			to: 'drops',
-			quantity: Asset.fromUnits(50000, '4,EOS'),
-			memo: String($session.actor)
-		});
-		await $session?.transact({ action });
-		setTimeout(loadAccountBalances, 1000);
-		setTimeout(loadBalanceRow, 1000);
-	}
-
-	async function sellram() {
-		const action = systemContract.action('sellram', {
-			account: $session.actor,
-			bytes: $accountRamBalance
-		});
-		await $session?.transact({ action });
-		setTimeout(loadAccountBalances, 1000);
-		setTimeout(loadBalanceRow, 1000);
-	}
-
-	async function buyram() {
-		const action = systemContract.action('buyrambytes', {
-			payer: $session.actor,
-			receiver: $session.actor,
-			bytes: UInt64.from(100000)
-		});
-		await $session?.transact({ action });
-		setTimeout(loadAccountBalances, 1000);
-		setTimeout(loadBalanceRow, 1000);
-	}
 
 	async function generate() {
 		lastResultError.set('');
@@ -284,12 +73,13 @@
 		transactBatchProgress.set(0);
 
 		const amount = $derivedDropsAmount;
-		const max = maximumBatchSize;
 
-		const batches = Math.ceil(amount / max);
+		const batches = Math.ceil(amount / maxPerTransaction);
 		if (batches > 1) {
 			const batchSizes = Array.from({ length: batches }, (_, idx) =>
-				idx === batches - 1 && amount % max > 0 ? amount % max : max
+				idx === batches - 1 && amount % maxPerTransaction > 0
+					? amount % maxPerTransaction
+					: maxPerTransaction
 			);
 			transactBatchSize.set(batchSizes.length);
 			for (const batchSize of batchSizes) {
@@ -311,7 +101,7 @@
 	}
 
 	async function mint(amount: number, totalAmount: number) {
-		const hash = String(Checksum256.hash(Bytes.from(String(randomName()), 'utf8')));
+		const hash = String(Checksum256.hash(Bytes.from(randomName(), 'utf8')));
 		const bound = $createBound;
 
 		// Specify the RAM required for this transaction and the RAM total
@@ -349,7 +139,7 @@
 
 			const requiresDeposit = !$createBound && $accountContractRam < ramRequired;
 			if (requiresDeposit) {
-				const depositRequired = $ramPrice * ($totalRamRequired - $accountContractRam);
+				const depositRequired = $ramPricePlusFee * ($totalRamRequired - $accountContractRam);
 
 				actions.unshift(
 					tokenContract.action('transfer', {
@@ -371,7 +161,12 @@
 
 			let result: TransactResult;
 			try {
-				result = await $session.transact({ actions });
+				if ($sessionKey) {
+					result = await $session.localTransact({ actions });
+				} else {
+					result = await $session.transact({ actions });
+				}
+				// result = await $session.transact({ actions });
 
 				// Set the last successful transaction ID
 				lastResultId.set(String(result.resolved?.transaction.id));
@@ -411,8 +206,8 @@
 				accountContractBalance.set(
 					DropsContract.Types.balances_row.from({
 						owner: $session.actor,
-						drops: row.drops.adding(mintAmount),
-						ram_bytes: row.ram_bytes
+						drops: $accountContractBalance.drops.adding(mintAmount),
+						ram_bytes: $accountContractBalance.ram_bytes
 					})
 				);
 			} else {
@@ -437,6 +232,14 @@
 			dropsAmount.set(Number(e.target.value));
 		}
 	};
+
+	function help() {
+		const modal: ModalSettings = {
+			type: 'component',
+			component: 'generateHelp'
+		};
+		modalStore.trigger(modal);
+	}
 </script>
 
 <div class="container p-4 sm:p-8 lg:p-16">
@@ -449,21 +252,28 @@
 			>
 		</div>
 		<p class="px-2 sm:px-6">
-			Generate bound drops using your own RAM or unbound drops using tokens.
+			{$t('generate.description', { itemnames: $t('common.itemnames') })}
+			<a class="hidden underline" href="#" on:click={help} on:keyup={help} tabindex="0"
+				>{$t('common.leanmore')}</a
+			>
 		</p>
 		<div class="p-2 sm:p-6 space-y-8 shadow-xl rounded-lg">
 			<form class="space-y-8" on:submit|preventDefault={generate}>
 				<div>
-					<p>Select bound vs unbound</p>
+					<p>{$t('generate.selectbound')}</p>
 					<RadioGroup>
-						<RadioItem bind:group={$createBound} name="justify" value={true}>Bound</RadioItem>
-						<RadioItem bind:group={$createBound} name="justify" value={false}>Unbound</RadioItem>
+						<RadioItem bind:group={$createBound} name="justify" value={true}
+							>{$t('common.bound')}</RadioItem
+						>
+						<RadioItem bind:group={$createBound} name="justify" value={false}
+							>{$t('common.unbound')}</RadioItem
+						>
 					</RadioGroup>
 				</div>
 				<label class="label">
 					<span>{$t('generate.togenerate')}</span>
 					<select class="select" on:change={selectDropAmount} value={$dropsAmount}>
-						{#each [1, 10, 100, 1000, 10000, 'X'] as amount}
+						{#each [1, 10, 100, 1000, 5000, 'X'] as amount}
 							<option value={amount}>+ {amount.toLocaleString()} {$t('common.itemnames')}</option>
 						{/each}
 					</select>
@@ -478,7 +288,7 @@
 							bind:value={$customDropsValue}
 						/>
 						{#if !$hasEnoughTokens}
-							<p class="text-red-500">Not enough tokens</p>
+							<p class="text-red-500">{$t('common.insufficientbalance')}</p>
 						{/if}
 					</label>
 				{/if}
@@ -505,9 +315,9 @@
 					<table class="table">
 						<thead>
 							<tr>
-								<th class="text-center table-cell-fit">Change</th>
-								<th class="text-center">Balance</th>
-								<th class="text-center">Delta</th>
+								<th class="text-center table-cell-fit">{$t('common.change')}</th>
+								<th class="text-center">{$t('common.balance')}</th>
+								<th class="text-center">{$t('common.delta')}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -528,7 +338,7 @@
 							</tr>
 							{#if $totalPrice > 0}
 								<tr>
-									<th class="table-cell-fit px-6">EOS (Balance)</th>
+									<th class="table-cell-fit px-6">EOS ({$t('common.balance')})</th>
 									<td class="text-center">
 										{#if $accountTokenBalance}
 											{Number($accountTokenBalance.value).toLocaleString()}
@@ -538,7 +348,7 @@
 									</td>
 									<td class="text-center">
 										<span class="text-yellow-500">
-											- {Number(Asset.fromUnits($totalPrice, '4,EOS').value).toLocaleString()}
+											- {Number(Asset.fromUnits($totalPrice, '4,EOS').value)}
 										</span>
 									</td>
 								</tr>
@@ -606,6 +416,14 @@
 						</div>
 						<div class="alert-actions"></div>
 					</aside>
+				{:else if $actionRequiresSessionKey}
+					<aside class="alert variant-filled-error">
+						<div><AlertCircle /></div>
+						<div class="alert-message">
+							<h3 class="h3">{$t('generate.reqsk')}</h3>
+							<p>{$t('generate.reqskdesc')}</p>
+						</div>
+					</aside>
 				{/if}
 				{#if $lastResult}
 					<div class="table-container">
@@ -631,7 +449,7 @@
 				{#if $session}
 					<button
 						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-						disabled={!$canGenerate}
+						disabled={!$canGenerate || $actionRequiresSessionKey}
 					>
 						<span>
 							{#if $transacting}
@@ -657,48 +475,7 @@
 			</form>
 		</div>
 		{#if devmode}
-			<div class="text-center space-y-2">
-				<div class="h1">DEV TOOLS</div>
-				<p>
-					<span>Account RAM Balance:</span>
-					<span>{Number($accountRamBalance).toLocaleString()} bytes</span>
-				</p>
-				<p>
-					<span>Account Token Balance:</span>
-					<span>{$accountTokenBalance}</span>
-				</p>
-
-				{#if $accountContractBalance}
-					<p>
-						<span>Contract RAM Balance:</span>
-						<span>{Number($accountContractBalance.ram_bytes).toLocaleString()} kb</span>
-					</p>
-					<button
-						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-						on:click|preventDefault={claim}
-					>
-						claim
-					</button>
-					<button
-						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-						on:click|preventDefault={deposit}
-					>
-						deposit 5 EOS
-					</button>
-					<button
-						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-						on:click|preventDefault={buyram}
-					>
-						buy 100kb ram
-					</button>
-					<button
-						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-						on:click|preventDefault={sellram}
-					>
-						sell all ram
-					</button>
-				{/if}
-			</div>
+			<DevTools />
 		{/if}
 	</div>
 </div>

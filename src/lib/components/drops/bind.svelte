@@ -1,22 +1,22 @@
 <script lang="ts">
 	import { derived, writable, type Readable, type Writable } from 'svelte/store';
 	import { AlertCircle } from 'svelte-lucide';
-	import { Asset, Serializer, type TransactResult } from '@wharfkit/session';
+	import { Asset, Int64, Serializer, type TransactResult } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropsContract, session, dropsContract } from '$lib/wharf';
+	import { DropsContract, session, sessionKey, dropsContract, loadAccountData } from '$lib/wharf';
 	import { sizeDropRow } from '$lib/constants';
+	import { dropsPricePlusFee } from '$lib/bancor';
 
 	const binding = writable(false);
 	export let drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
-	export let dropsPrice: Writable<number> = writable(0);
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean> = writable(false);
+	const claim = writable(false);
 
 	interface BindResult {
 		bound: number;
-		ram: number;
-		redeemed: Asset;
+		ram_used: Int64;
 		txid: string;
 	}
 
@@ -48,9 +48,9 @@
 	);
 
 	const estimatedEOS = derived(
-		[dropsPrice, numUnboundSelected],
-		([$dropsPrice, $numUnboundSelected]) => {
-			return $dropsPrice * $numUnboundSelected;
+		[dropsPricePlusFee, numUnboundSelected],
+		([$dropsPricePlusFee, $numUnboundSelected]) => {
+			return $dropsPricePlusFee * $numUnboundSelected;
 		}
 	);
 
@@ -62,24 +62,34 @@
 		lastBindError.set(undefined);
 		binding.set(true);
 		if ($session) {
-			const action = dropsContract.action('bind', {
-				owner: $session?.actor,
-				drops_ids: Object.keys($selected)
-			});
+			const actions = [
+				dropsContract.action('bind', {
+					owner: $session?.actor,
+					drops_ids: Object.keys($selected)
+				})
+			];
+
+			if ($claim) {
+				actions.push(
+					dropsContract.action('claim', {
+						owner: $session?.actor,
+						sell_ram: true
+					})
+				);
+			}
 
 			let result: TransactResult;
 			try {
-				result = await $session.transact({ action });
+				if ($sessionKey) {
+					result = await $session.localTransact({ actions });
+				} else {
+					result = await $session.transact({ actions });
+				}
 				binding.set(false);
 
 				result.returns.forEach((returnValue) => {
 					try {
-						const data = Serializer.decode({
-							data: returnValue.hex,
-							type: DropsContract.Types.bind_return_value
-						});
-
-						if (Number(data.ram_sold.value) > 0) {
+						if (returnValue.action.equals('bind')) {
 							// Refresh drops that were bound
 							const dropsBound = Object.keys($selected).map((s) => String(s));
 							drops.update((current) => {
@@ -90,17 +100,21 @@
 								return current;
 							});
 
-							// Clear selected
-							selected.set({});
-							selectingAll.set(false);
+							const ram_used = Serializer.decode({
+								data: returnValue.hex,
+								type: Int64
+							});
 
 							lastBindResult.set({
 								bound: dropsBound.length,
-								ram: Number(data.ram_sold),
-								redeemed: data.redeemed,
+								ram_used,
 								txid: String(result.resolved?.transaction.id)
 							});
 						}
+
+						// Clear selected
+						selected.set({});
+						selectingAll.set(false);
 					} catch (e) {
 						// console.log(e);
 					}
@@ -110,7 +124,12 @@
 				lastBindResult.set(undefined);
 				lastBindError.set(e);
 			}
+			setTimeout(loadAccountData, 1000);
 		}
+	}
+
+	function toggleClaim(e) {
+		claim.set(e.target.checked);
 	}
 </script>
 
@@ -118,34 +137,6 @@
 	<p>
 		{$t('inventory.bindheader', { itemnames: $t('common.itemnames') })}
 	</p>
-	<div class="table-container">
-		<table class="table">
-			<thead>
-				<tr>
-					<th colspan="2"> {$t('inventory.estimatedresults')} </th>
-				</tr>
-			</thead>
-			<tbody>
-				{#if $isUnboundSelected}
-					<tr>
-						<th>{$t('inventory.ramtouse')}</th>
-						<td>{$estimatedRAM} bytes</td>
-					</tr>
-					<tr>
-						<th>{$t('inventory.tokenredeemed', { token: 'EOS' })}</th>
-						<td>{Asset.fromUnits($estimatedEOS, '4,EOS')}</td>
-					</tr>
-				{/if}
-				{#if !$isBoundSelected && !$isUnboundSelected}
-					<tr>
-						<td colspan="2" class="text-center">
-							{$t('inventory.estimationwaiting', { itemnames: $t('common.itemnames') })}
-						</td>
-					</tr>
-				{/if}
-			</tbody>
-		</table>
-	</div>
 	{#if $lastBindError}
 		<aside class="alert variant-filled-error">
 			<div><AlertCircle /></div>
@@ -168,6 +159,13 @@
 			<div class="alert-actions"></div>
 		</aside>
 	{/if}
+	<label>
+		<label class="flex items-center space-x-2">
+			<input class="checkbox" type="checkbox" on:change={toggleClaim} />
+			<p>{$t('inventory.claimbalance')}</p>
+		</label>
+	</label>
+
 	<button
 		type="button"
 		class="btn bg-blue-400 w-full"
@@ -177,7 +175,39 @@
 		{$t('inventory.binditems', { itemnames: $t('common.itemnames') })}
 		{Object.keys($selected).length}
 	</button>
-	{#if $lastBindResult}
+	{#if Object.keys($selected).length}
+		<div class="table-container">
+			<table class="table">
+				<thead>
+					<tr>
+						<th colspan="2"> {$t('inventory.estimatedresults')} </th>
+					</tr>
+				</thead>
+				<tbody>
+					{#if $isUnboundSelected}
+						<tr>
+							<th>{$t('inventory.ramtouse')}</th>
+							<td>{$estimatedRAM} bytes</td>
+						</tr>
+						{#if $claim}
+							<tr>
+								<th>{$t('inventory.tokenredeemed', { token: 'EOS' })}</th>
+								<td>{Asset.fromUnits($estimatedEOS, '4,EOS')}</td>
+							</tr>
+						{/if}
+					{/if}
+					{#if !$isBoundSelected && !$isUnboundSelected}
+						<tr>
+							<td colspan="2" class="text-center">
+								{$t('inventory.estimationwaiting', { itemnames: $t('common.itemnames') })}
+							</td>
+						</tr>
+					{/if}
+				</tbody>
+			</table>
+		</div>
+	{/if}
+	{#if $lastBindResult && !Object.keys($selected).length}
 		<div class="table-container">
 			<table class="table">
 				<thead>
@@ -204,12 +234,8 @@
 						<td>{$lastBindResult.bound}</td>
 					</tr>
 					<tr>
-						<td class="text-right">{$t('inventory.itemramreclaimed')}</td>
-						<td>{$lastBindResult.ram}</td>
-					</tr>
-					<tr>
-						<td class="text-right">{$t('inventory.itemeosredeemed')}</td>
-						<td>{$lastBindResult.redeemed}</td>
+						<td class="text-right">{$t('inventory.ramused')}</td>
+						<td>{$lastBindResult.ram_used}</td>
 					</tr>
 				</tbody>
 			</table>

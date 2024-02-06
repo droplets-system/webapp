@@ -6,28 +6,12 @@
 	import { t } from '$lib/i18n';
 	import { DropsContract, session, dropsContract } from '$lib/wharf';
 	import { sizeDropRow } from '$lib/constants';
-	import { onMount } from 'svelte';
-	import { getRamPrice } from '$lib/bancor';
+	import { ramPrice } from '$lib/bancor';
 
 	const destroying = writable(false);
 	export let drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
-	export let dropsPrice: Writable<number> = writable(0);
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean> = writable(false);
-
-	const ramPrice = writable(0);
-
-	let ramLoader: ReturnType<typeof setInterval>;
-
-	onMount(async () => {
-		loadRamPrice();
-		ramLoader = setInterval(loadRamPrice, 2000);
-	});
-
-	async function loadRamPrice() {
-		const cost_plus_fee = await getRamPrice();
-		ramPrice.set(Number(cost_plus_fee));
-	}
 
 	interface DestroyResult {
 		destroyed: number;
@@ -111,11 +95,8 @@
 						drops.update((current) => {
 							for (const toRemove of dropsDestroyed) {
 								const index = current.findIndex((row) => {
-									console.log('row.seed', String(row.seed));
-									console.log('toRemove', String(toRemove));
 									return String(row.seed) === String(toRemove);
 								});
-								console.log('index', index);
 								current.splice(index, 1);
 							}
 							return current;
@@ -164,13 +145,13 @@
 				{:else}
 					{#if $numBoundSelected > 0}
 						<tr>
-							<th>{$t('inventory.ramreleased')}</th>
+							<th>{$t('inventory.ramtorelease')}</th>
 							<td>{sizeDropRow * $numBoundSelected} bytes</td>
 						</tr>
 					{/if}
 					{#if $numUnboundSelected > 0}
 						<tr>
-							<th>{$t('inventory.eosreturned')}</th>
+							<th>{$t('inventory.itemeosredeemed')}</th>
 							<td>{Asset.fromUnits(sizeDropRow * $numUnboundSelected * $ramPrice, '4,EOS')}</td>
 						</tr>
 					{/if}
@@ -232,10 +213,10 @@
 						</tr>
 					{/if}
 					{#if $lastDestroyResult.unbound_destroyed > 0}
-						<tr>
+						<!-- <tr>
 							<td class="text-right">{$t('inventory.unbound_destroyed')}</td>
 							<td>{$lastDestroyResult.unbound_destroyed}</td>
-						</tr>
+						</tr> -->
 					{/if}
 				</tbody>
 			</table>
