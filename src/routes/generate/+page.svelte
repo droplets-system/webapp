@@ -29,7 +29,9 @@
 	import { loadRamPrice, ramPrice, ramPricePlusFee } from '$lib/bancor';
 	import { maximumBatchSize, sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
 	import {
+		accountBalanceToUse,
 		lastResultError,
+		hasEnoughContractRAM,
 		transacting,
 		transactBatchSize,
 		transactBatchProgress,
@@ -44,10 +46,16 @@
 		hasEnoughTokens,
 		useRandomDrop,
 		randomDrop,
-		totalPrice,
-		totalRamCreditsToUse,
 		canGenerate,
-		randomName
+		randomName,
+		contractBalanceToUse,
+		accountRamPurchaseAmount,
+		accountRamPurchasePrice,
+		hasEnoughAccountRAM,
+		requiresDeposit,
+		totalRamToPurchase,
+		accountRamDepositAmount,
+		accountRamDepositPrice
 	} from './generate';
 
 	import DevTools from './devtools.svelte';
@@ -61,7 +69,7 @@
 	const actionRequiresSessionKey = derived(
 		[derivedDropsAmount, sessionKey],
 		([$derivedDropsAmount, $sessionKey]) => {
-			console.log($derivedDropsAmount, $sessionKey);
+			return false;
 			return $derivedDropsAmount > maximumBatchSize && !$sessionKey;
 		}
 	);
@@ -130,25 +138,22 @@
 			const requiresRAMPurchase = $createBound && $accountRamBalance < ramRequired;
 			let ramPurchaseAmount = 0; // The bytes purchased in tx, will update account record on success
 			if (requiresRAMPurchase) {
-				ramPurchaseAmount = ramRequiredTotal;
 				actions.unshift(
 					systemContract.action('buyrambytes', {
 						payer: $session.actor,
 						receiver: $session.actor,
-						bytes: ramRequiredTotal
+						bytes: $accountRamPurchaseAmount
 					})
 				);
 			}
 
 			const requiresDeposit = !$createBound && $accountContractRam < ramRequired;
 			if (requiresDeposit) {
-				const depositRequired = $ramPricePlusFee * ($totalRamRequired - $accountContractRam);
-
 				actions.unshift(
 					tokenContract.action('transfer', {
 						from: $session.actor,
 						to: 'drops',
-						quantity: Asset.fromUnits(depositRequired, '4,EOS'),
+						quantity: Asset.fromUnits($accountRamDepositAmount, '4,EOS'),
 						memo: String($session.actor)
 					})
 				);
@@ -243,6 +248,8 @@
 		};
 		modalStore.trigger(modal);
 	}
+
+	const devgrid = devmode ? 'grid grid-cols-2 gap-8' : '';
 </script>
 
 <div class="container p-4 sm:p-8 lg:p-16">
@@ -260,53 +267,57 @@
 				>{$t('common.leanmore')}</a
 			>
 		</p>
-		<div class="p-2 sm:p-6 space-y-8 shadow-xl rounded-lg">
-			<form class="space-y-8" on:submit|preventDefault={generate}>
-				<div>
-					<p>{$t('generate.selectbound')}</p>
-					<RadioGroup>
-						<RadioItem bind:group={$createBound} name="justify" value={true} disabled={$transacting}
-							>{$t('common.bound')}</RadioItem
-						>
-						<RadioItem
-							bind:group={$createBound}
-							name="justify"
-							value={false}
-							disabled={$transacting}
-						>
-							{$t('common.unbound')}
-						</RadioItem>
-					</RadioGroup>
-				</div>
-				<label class="label">
-					<span>{$t('generate.togenerate')}</span>
-					<select
-						class="select"
-						on:change={selectDropAmount}
-						value={$dropsAmount}
-						disabled={$transacting}
-					>
-						{#each [1, 10, 100, 1000, 5000, 'X'] as amount}
-							<option value={amount}>+ {amount.toLocaleString()} {$t('common.itemnames')}</option>
-						{/each}
-					</select>
-				</label>
-				{#if $customDropsAmount}
+		<div class={'p-2 sm:p-6 space-y-8 shadow-xl rounded-lg ' + devgrid}>
+			<div class="space-y-8">
+				<form class="space-y-8" on:submit|preventDefault={generate}>
+					<div>
+						<p>{$t('generate.selectbound')}</p>
+						<RadioGroup>
+							<RadioItem
+								bind:group={$createBound}
+								name="justify"
+								value={true}
+								disabled={$transacting}>{$t('common.bound')}</RadioItem
+							>
+							<RadioItem
+								bind:group={$createBound}
+								name="justify"
+								value={false}
+								disabled={$transacting}
+							>
+								{$t('common.unbound')}
+							</RadioItem>
+						</RadioGroup>
+					</div>
 					<label class="label">
-						<span>{$t('generate.enteramount')}</span>
-						<input
-							class="input"
-							class:input-error={!$hasEnoughTokens}
+						<span>{$t('generate.togenerate')}</span>
+						<select
+							class="select"
+							on:change={selectDropAmount}
+							value={$dropsAmount}
 							disabled={$transacting}
-							type="text"
-							bind:value={$customDropsValue}
-						/>
-						{#if !$hasEnoughTokens}
-							<p class="text-red-500">{$t('common.insufficientbalance')}</p>
-						{/if}
+						>
+							{#each [1, 10, 100, 1000, 5000, 'X'] as amount}
+								<option value={amount}>+ {amount.toLocaleString()} {$t('common.itemnames')}</option>
+							{/each}
+						</select>
 					</label>
-				{/if}
-				<!-- <label>
+					{#if $customDropsAmount}
+						<label class="label">
+							<span>{$t('generate.enteramount')}</span>
+							<input
+								class="input"
+								class:input-error={!$hasEnoughTokens}
+								disabled={$transacting}
+								type="text"
+								bind:value={$customDropsValue}
+							/>
+							{#if !$hasEnoughTokens}
+								<p class="text-red-500">{$t('common.insufficientbalance')}</p>
+							{/if}
+						</label>
+					{/if}
+					<!-- <label>
                             <label class="flex items-center space-x-2">
                                 <input
                                     class="checkbox"
@@ -317,180 +328,274 @@
                                 <p>Randomly generate drops value</p>
                             </label>
                         </label> -->
-				{#if !$useRandomDrop}
-					<label class="label space-y-4">
-						<span class="h4 font-bold"
-							>{$t('generate.dropseedvalue', { itemname: $t('common.itemname') })}</span
-						>
-						<input class="input" type="text" placeholder="Random Drop" value={$randomDrop} />
-					</label>
-				{/if}
-				<div class="table-container">
-					<table class="table">
-						<thead>
-							<tr>
-								<th class="text-center table-cell-fit">{$t('common.change')}</th>
-								<th class="text-center">{$t('common.balance')}</th>
-								<th class="text-center">{$t('common.delta')}</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<th class="table-cell-fit px-6">Drops</th>
-								<td class="text-center">
-									{#if $accountContractBalance}
-										{$accountContractDrops.toLocaleString()}
-									{:else}
-										0
-									{/if}
-								</td>
-								<td class="text-center">
-									<span class="text-green-500">
-										+ {$derivedDropsAmount.toLocaleString()}
-									</span>
-								</td>
-							</tr>
-							{#if $totalPrice > 0}
-								<tr>
-									<th class="table-cell-fit px-6">EOS ({$t('common.balance')})</th>
-									<td class="text-center">
-										{#if $accountTokenBalance}
-											{Number($accountTokenBalance.value).toLocaleString()}
-										{:else}
-											0
-										{/if}
-									</td>
-									<td class="text-center">
-										<span class="text-yellow-500">
-											- {Number(Asset.fromUnits($totalPrice, '4,EOS').value)}
-										</span>
-									</td>
-								</tr>
-							{/if}
-							{#if !$createBound && $accountContractBalance && $totalRamCreditsToUse > 0}
-								<tr>
-									<th class="table-cell-fit px-6">RAM (Credits)</th>
-									<td class="text-center">
-										{#if $accountContractBalance}
-											{Number($accountContractBalance.ram_bytes).toLocaleString()}
-										{:else}
-											0
-										{/if}
-									</td>
-									<td class="text-center">
-										<span class="text-yellow-500">
-											- {$totalRamCreditsToUse.toLocaleString()}
-										</span>
-									</td>
-								</tr>
-							{/if}
-							{#if $createBound && $ramPrice && $totalRamRequired > 0 && $accountRamBalance < $totalRamRequired}
-								<tr>
-									<th class="table-cell-fit px-6">RAM (Purchase)</th>
-									<td class="text-center">
-										{#if $accountRamBalance}
-											{Asset.from($accountTokenBalance.value, '4,EOS')}
-										{:else}
-											0
-										{/if}
-									</td>
-									<td class="text-center">
-										<span class="text-yellow-500">
-											- {Asset.fromUnits($totalRamRequired * $ramPrice, '4,EOS')}
-										</span>
-									</td>
-								</tr>
-							{/if}
-							{#if $createBound && $totalRamRequired > 0 && $accountRamBalance >= $totalRamRequired}
-								<tr>
-									<th class="table-cell-fit px-6">RAM (Balance)</th>
-									<td class="text-center">
-										{#if $accountRamBalance}
-											{$accountRamBalance.toLocaleString()}
-										{:else}
-											0
-										{/if}
-									</td>
-									<td class="text-center">
-										<span class="text-yellow-500">
-											- {$totalRamRequired.toLocaleString()}
-										</span>
-									</td>
-								</tr>
-							{/if}
-						</tbody>
-					</table>
-				</div>
-				{#if $lastResultError}
-					<aside class="alert variant-filled-error">
-						<div><AlertCircle /></div>
-						<div class="alert-message">
-							<h3 class="h3">{$t('common.transacterror')}</h3>
-							<p>{$lastResultError}</p>
-						</div>
-						<div class="alert-actions"></div>
-					</aside>
-				{:else if $actionRequiresSessionKey}
-					<aside class="alert variant-filled-error">
-						<div><AlertCircle /></div>
-						<div class="alert-message">
-							<h3 class="h3">{$t('generate.reqsk')}</h3>
-							<p>{$t('generate.reqskdesc')}</p>
-						</div>
-					</aside>
-				{/if}
-				{#if $lastResult}
+					{#if !$useRandomDrop}
+						<label class="label space-y-4">
+							<span class="h4 font-bold"
+								>{$t('generate.dropseedvalue', { itemname: $t('common.itemname') })}</span
+							>
+							<input class="input" type="text" placeholder="Random Drop" value={$randomDrop} />
+						</label>
+					{/if}
 					<div class="table-container">
 						<table class="table">
 							<thead>
 								<tr>
-									<th
-										colspan="3"
-										class="text-center variant-filled w-full bg-gradient-to-br from-green-500 to-green-700 box-decoration-clone"
-									>
-										<div class="text-white">
-											{$t('common.transactsuccess')}
-										</div>
-										<div class="lowercase text-xs text-white hidden sm:block">
-											{$transactBatchProgress} / {$transactBatchSize}
-										</div>
-									</th>
+									<th class="text-right table-cell-fit"></th>
+									{#if devmode}
+										<th class="text-center">{$t('common.balance')}</th>
+									{/if}
+									<th>{$t('common.change')}</th>
+									{#if devmode}
+										<th class="text-center">{$t('common.total')}</th>
+									{/if}
 								</tr>
 							</thead>
+							<tbody>
+								<tr>
+									<th class="table-cell-fit text-right px-6">Drops</th>
+									{#if devmode}
+										<td class="text-center">
+											{#if $accountContractBalance}
+												{$accountContractDrops.toLocaleString()}
+											{:else}
+												0
+											{/if}
+										</td>
+									{/if}
+									<td>
+										<span class="text-green-500">
+											+ {$derivedDropsAmount.toLocaleString()}
+										</span>
+									</td>
+									{#if devmode}
+										<td>
+											{($accountContractDrops + $derivedDropsAmount).toLocaleString()}
+										</td>
+									{/if}
+								</tr>
+								{#if $createBound && $accountTokenBalance && $accountRamPurchasePrice.value > 0}
+									<tr>
+										<th class="table-cell-fit text-right px-6">EOS ({$t('common.balance')})</th>
+										{#if devmode}
+											<td class="text-center">
+												{#if $accountTokenBalance}
+													{Number($accountTokenBalance.value).toLocaleString()}
+												{:else}
+													0
+												{/if}
+											</td>
+										{/if}
+										<td>
+											<span class="text-yellow-500">
+												- {$accountRamPurchasePrice.value}
+											</span>
+										</td>
+										{#if devmode}
+											<td>
+												{(
+													$accountTokenBalance.value - $accountRamPurchasePrice.value
+												).toLocaleString()}
+											</td>
+										{/if}
+									</tr>
+								{/if}
+								{#if !$createBound && $accountTokenBalance && $accountRamDepositPrice.value > 0}
+									<tr>
+										<th class="table-cell-fit text-right px-6">EOS ({$t('common.balance')})</th>
+										{#if devmode}
+											<td class="text-center">
+												{#if $accountTokenBalance}
+													{Number($accountTokenBalance.value).toLocaleString()}
+												{:else}
+													0
+												{/if}
+											</td>
+										{/if}
+										<td>
+											<span class="text-yellow-500">
+												- {$accountRamDepositPrice}
+											</span>
+										</td>
+										{#if devmode}
+											<td>
+												{(
+													$accountTokenBalance.value - $accountRamDepositPrice.value
+												).toLocaleString()}
+											</td>
+										{/if}
+									</tr>
+								{/if}
+								{#if !$createBound && $accountContractBalance && $contractBalanceToUse > 0}
+									<tr>
+										<th class="table-cell-fit text-right px-6">RAM (Credits)</th>
+										{#if devmode}
+											<td>
+												{#if $accountContractBalance}
+													{Number($accountContractBalance.ram_bytes).toLocaleString()}
+												{:else}
+													0
+												{/if}
+											</td>
+										{/if}
+										<td>
+											<span class="text-yellow-500">
+												- {$contractBalanceToUse.toLocaleString()}
+											</span>
+										</td>
+									</tr>
+								{/if}
+								{#if $createBound && $accountRamPurchaseAmount > 0}
+									<tr>
+										<th class="table-cell-fit text-right px-6">RAM (Purchase)</th>
+										{#if devmode}
+											<td class="text-center">
+												{#if $accountRamBalance}
+													{$accountRamBalance.toLocaleString()}
+												{:else}
+													0
+												{/if}
+											</td>
+										{/if}
+										<td>
+											<span class="text-green-500">
+												+ {$accountRamPurchaseAmount.toLocaleString()}
+											</span>
+										</td>
+										{#if devmode}
+											<td>
+												{($accountRamBalance + $accountRamPurchaseAmount).toLocaleString()}
+											</td>
+										{/if}
+									</tr>
+								{/if}
+								{#if $createBound && $totalRamRequired > 0}
+									<tr>
+										<th class="table-cell-fit text-right px-6">RAM ({$t('common.used')})</th>
+										{#if devmode}
+											<td class="text-center">
+												{($accountRamBalance + $accountRamPurchaseAmount).toLocaleString()}
+											</td>
+										{/if}
+										<td>
+											<span class="text-yellow-500">
+												- {$totalRamRequired.toLocaleString()}
+											</span>
+										</td>
+										{#if devmode}
+											<td>
+												{(
+													$accountRamBalance +
+													$accountRamPurchaseAmount -
+													$totalRamRequired
+												).toLocaleString()}
+											</td>
+										{/if}
+									</tr>
+								{/if}
+							</tbody>
 						</table>
 					</div>
-				{/if}
-				{#if $session}
-					<button
-						class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-						disabled={!$canGenerate || $actionRequiresSessionKey}
-					>
-						<span>
-							{#if $transacting}
-								<Loader2 class="animate-spin" />
-							{:else}
-								<MemoryStick />
-							{/if}
-						</span>
-						<span class="text-sm">
-							{$t('common.generate')}
-						</span>
-					</button>
-				{:else}
-					<aside class="alert variant-filled-error">
-						<div><AlertCircle /></div>
-						<div class="alert-message">
-							<h3 class="h3">{$t('common.signinfirst')}</h3>
-							<p>{$t('generate.signinfirst')}</p>
+					{#if $lastResultError}
+						<aside class="alert variant-filled-error">
+							<div><AlertCircle /></div>
+							<div class="alert-message">
+								<h3 class="h3">{$t('common.transacterror')}</h3>
+								<p>{$lastResultError}</p>
+							</div>
+							<div class="alert-actions"></div>
+						</aside>
+					{:else if $actionRequiresSessionKey}
+						<aside class="alert variant-filled-error">
+							<div><AlertCircle /></div>
+							<div class="alert-message">
+								<h3 class="h3">{$t('generate.reqsk')}</h3>
+								<p>{$t('generate.reqskdesc')}</p>
+							</div>
+						</aside>
+					{/if}
+					{#if $lastResult}
+						<div class="table-container">
+							<table class="table">
+								<thead>
+									<tr>
+										<th
+											colspan="3"
+											class="text-center variant-filled w-full bg-gradient-to-br from-green-500 to-green-700 box-decoration-clone"
+										>
+											<div class="text-white">
+												{$t('common.transactsuccess')}
+											</div>
+											<div class="lowercase text-xs text-white hidden sm:block">
+												{$transactBatchProgress} / {$transactBatchSize}
+											</div>
+										</th>
+									</tr>
+								</thead>
+							</table>
 						</div>
-						<div class="alert-actions"></div>
-					</aside>
+					{/if}
+					{#if $session}
+						<button
+							class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+							disabled={!$canGenerate || $actionRequiresSessionKey}
+						>
+							<span>
+								{#if $transacting}
+									<Loader2 class="animate-spin" />
+								{:else}
+									<MemoryStick />
+								{/if}
+							</span>
+							<span class="text-sm">
+								{$t('common.generate')}
+							</span>
+						</button>
+					{:else}
+						<aside class="alert variant-filled-error">
+							<div><AlertCircle /></div>
+							<div class="alert-message">
+								<h3 class="h3">{$t('common.signinfirst')}</h3>
+								<p>{$t('generate.signinfirst')}</p>
+							</div>
+							<div class="alert-actions"></div>
+						</aside>
+					{/if}
+				</form>
+				{#if devmode}
+					<DevTools />
 				{/if}
-			</form>
+			</div>
+			{#if devmode}
+				<div>
+					<div class="table-container space-y-4">
+						<div class="h4">balances</div>
+						<table class="table">
+							<tbody>
+								<tr><td>accountRamBalance</td><td>{$accountRamBalance}</td></tr>
+								<tr><td>accountTokenBalance</td><td>{$accountTokenBalance}</td></tr>
+								<tr><td>accountContractRam</td><td>{$accountContractRam}</td></tr>
+							</tbody>
+						</table>
+						<div class="h4">funding</div>
+						<table class="table">
+							<tbody>
+								<tr><td>derivedDropsAmount</td><td>{$derivedDropsAmount}</td></tr>
+								<tr><td>hasEnoughAccountRAM</td><td>{$hasEnoughAccountRAM}</td></tr>
+								<tr><td>hasEnoughContractRAM</td><td>{$hasEnoughContractRAM}</td></tr>
+								<tr><td>hasEnoughTokens</td><td>{$hasEnoughTokens}</td></tr>
+								<tr><td>contractBalanceToUse</td><td>{$contractBalanceToUse}</td></tr>
+								<tr><td>totalRamRequired</td><td>{$totalRamRequired}</td></tr>
+								<tr><td>totalRamToPurchase</td><td>{$totalRamToPurchase}</td></tr>
+								<tr><td>accountRamPurchaseAmount</td><td>{$accountRamPurchaseAmount}</td></tr>
+								<tr><td>accountRamPurchasePrice</td><td>{$accountRamPurchasePrice}</td></tr>
+								<tr><td>requiresDeposit</td><td>{$requiresDeposit}</td></tr>
+								<tr><td>canGenerate</td><td>{$canGenerate}</td></tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			{/if}
 		</div>
-		{#if devmode}
-			<DevTools />
-		{/if}
 	</div>
 </div>
 

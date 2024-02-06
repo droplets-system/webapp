@@ -61,45 +61,30 @@
 
 <div class="text-center space-y-2">
 	<div class="h1">DEV TOOLS</div>
-	<p>
-		<span>Account RAM Balance:</span>
-		<span>{Number($accountRamBalance).toLocaleString()} bytes</span>
-	</p>
-	<p>
-		<span>Account Token Balance:</span>
-		<span>{$accountTokenBalance}</span>
-	</p>
-
-	{#if $accountContractBalance}
-		<p>
-			<span>Contract RAM Balance:</span>
-			<span>{Number($accountContractBalance.ram_bytes).toLocaleString()} bytes</span>
-		</p>
-		<button
-			class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-			on:click|preventDefault={claim}
-		>
-			claim
-		</button>
-		<button
-			class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-			on:click|preventDefault={deposit}
-		>
-			deposit 5 EOS
-		</button>
-		<button
-			class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-			on:click|preventDefault={buyram}
-		>
-			buy 100kb ram
-		</button>
-		<button
-			class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
-			on:click|preventDefault={sellram}
-		>
-			sell all ram
-		</button>
-	{/if}
+	<button
+		class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+		on:click|preventDefault={claim}
+	>
+		claim
+	</button>
+	<button
+		class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+		on:click|preventDefault={deposit}
+	>
+		deposit 5 EOS
+	</button>
+	<button
+		class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+		on:click|preventDefault={buyram}
+	>
+		buy 100kb ram
+	</button>
+	<button
+		class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
+		on:click|preventDefault={sellram}
+	>
+		sell all ram
+	</button>
 </div>
 
 <style lang="postcss">
