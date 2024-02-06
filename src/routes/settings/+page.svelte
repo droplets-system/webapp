@@ -48,7 +48,7 @@
 		<div class="h2 font-bold">{$t('common.settings')}</div>
 		<div class="h3">{$t('common.account')}</div>
 		<p>{$t('common.loggedinas', { account: $session.actor })}</p>
-		{#if $accountContractRam}
+		{#if $accountContractRam >= 3}
 			<div class="h3">{$t('common.contractbalance')}</div>
 			<p>{$t('common.contractbalanceexists')}</p>
 			<button class="btn bg-green-600" on:click={claim}>{$t('common.claim')}</button>
