@@ -2,9 +2,7 @@
 	import { Asset, UInt64 } from '@wharfkit/session';
 
 	import {
-		accountContractBalance,
 		accountRamBalance,
-		accountTokenBalance,
 		dropsContract,
 		loadAccountBalances,
 		loadBalanceRow,
@@ -16,8 +14,7 @@
 	async function claim() {
 		if ($session) {
 			const action = dropsContract.action('claim', {
-				owner: $session.actor,
-				sell_ram: true
+				owner: $session.actor
 			});
 			await $session.transact({ action });
 			setTimeout(loadAccountBalances, 1000);
