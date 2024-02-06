@@ -79,7 +79,7 @@
 		selectingAll.set(false);
 	}
 
-	let tabSet: number = 4;
+	let tabSet: number = 1;
 </script>
 
 <div class="container mx-auto grid lg:grid-cols-4 2xl:grid-cols-7">
