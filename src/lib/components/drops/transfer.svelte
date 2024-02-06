@@ -27,10 +27,16 @@
 		);
 		return !!selectedBound;
 	});
+
 	const isDisabled = derived(
 		[isBoundSelected, selected, transferTo, transferring],
 		([$isBoundSelected, $selected, $transferTo, $transferring]) => {
-			return $transferring || $isBoundSelected || !Object.keys($selected).length || !$transferTo;
+			const hasSelectedDrops = Object.keys($selected).length;
+			let invalidName = false;
+			try {
+				invalidName = String(Name.from($transferTo)) !== $transferTo;
+			} catch (e) {}
+			return $transferring || $isBoundSelected || !hasSelectedDrops || invalidName || !$transferTo;
 		}
 	);
 
