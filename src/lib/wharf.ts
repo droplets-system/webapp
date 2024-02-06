@@ -143,6 +143,8 @@ export async function login() {
 export async function logout() {
 	await sessionKit.logout();
 	walletSession.set(undefined);
+	sessionKey.set(undefined);
+	localStorage.removeItem('sessionKey');
 }
 
 export async function restore() {
