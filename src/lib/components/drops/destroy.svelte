@@ -4,7 +4,7 @@
 	import { Asset, Serializer, type TransactResult } from '@wharfkit/session';
 
 	import { t } from '$lib/i18n';
-	import { DropsContract, session, dropsContract } from '$lib/wharf';
+	import { DropsContract, session, dropsContract, loadAccountData } from '$lib/wharf';
 	import { sizeDropRow } from '$lib/constants';
 	import { ramPrice } from '$lib/bancor';
 
@@ -117,6 +117,7 @@
 				lastDestroyResult.set(undefined);
 				lastDestroyError.set(e);
 			}
+			setTimeout(loadAccountData, 1000);
 		}
 	}
 </script>
