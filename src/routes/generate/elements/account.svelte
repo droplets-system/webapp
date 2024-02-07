@@ -24,7 +24,9 @@
 				<tr><th colspan="2">RAM</th></tr>
 			</thead>
 			<tbody>
-				<tr><td>Account</td><td>{$accountRamBalance.toLocaleString()} bytes</td></tr>
+				{#if $accountRamBalance}
+					<tr><td>Account</td><td>{$accountRamBalance.toLocaleString()} bytes</td></tr>
+				{/if}
 				{#if $accountContractRam > 0}
 					<tr><td>Contract</td><td>{$accountContractRam.toLocaleString()} bytes</td></tr>
 				{/if}
