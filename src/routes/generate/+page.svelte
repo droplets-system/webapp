@@ -227,7 +227,7 @@
 		<div class="h1 flex items-center px-2 sm:px-6">
 			<PackagePlus class="dark:text-blue-400 inline size-12 mr-4" />
 			<span
-				class="bg-gradient-to-br from-blue-500 to-cyan-300 bg-clip-text text-transparent box-decoration-clone"
+				class="leading-snug bg-gradient-to-br from-blue-500 to-cyan-300 bg-clip-text text-transparent box-decoration-clone"
 				>{$t('common.generate')}</span
 			>
 		</div>

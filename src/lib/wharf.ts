@@ -152,9 +152,10 @@ export async function restore() {
 	walletSession.set(restored);
 }
 
-export const account: Readable<Account | undefined> = derived(session, ($session, set) => {
-	if ($session) {
-		accountKit.load($session.actor).then((account) => set(account));
+export const account: Writable<Account | undefined> = writable();
+session.subscribe((session) => {
+	if (session) {
+		accountKit.load(session.actor).then((data) => account.set(data));
 	}
 });
 
@@ -180,6 +181,7 @@ export async function loadAccountBalances() {
 	const currentSession = get(session);
 	if (currentSession) {
 		const result = await accountKit.load(currentSession.actor);
+		account.set(result);
 		accountRamBalance.set(Number(result.resource('ram').available));
 		accountCpuBalance.set(Number(result.resource('cpu').available));
 		accountNetBalance.set(Number(result.resource('net').available));
