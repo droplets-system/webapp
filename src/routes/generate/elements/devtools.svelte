@@ -56,8 +56,8 @@
 	}
 </script>
 
-<div class="text-center space-y-2">
-	<div class="h1">DEV TOOLS</div>
+<div class="space-y-2">
+	<div class="h3 text-blue-300 font-bold">Developer Helper Actions</div>
 	<button
 		class="btn btn-lg variant-filled w-full bg-gradient-to-br from-blue-300 to-cyan-400 box-decoration-clone"
 		on:click|preventDefault={claim}

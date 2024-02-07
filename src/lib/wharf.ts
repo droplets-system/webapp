@@ -160,6 +160,8 @@ export const account: Readable<Account | undefined> = derived(session, ($session
 
 export const accountRamBalance: Writable<number> = writable();
 export const accountTokenBalance: Writable<Asset> = writable();
+export const accountCpuBalance: Writable<number> = writable();
+export const accountNetBalance: Writable<number> = writable();
 
 export const accountContractBalance: Writable<DropsContract.Types.balances_row> = writable();
 export const accountContractDrops = derived(accountContractBalance, ($accountContractBalance) =>
@@ -179,6 +181,8 @@ export async function loadAccountBalances() {
 	if (currentSession) {
 		const result = await accountKit.load(currentSession.actor);
 		accountRamBalance.set(Number(result.resource('ram').available));
+		accountCpuBalance.set(Number(result.resource('cpu').available));
+		accountNetBalance.set(Number(result.resource('net').available));
 		if (result.data.core_liquid_balance) {
 			accountTokenBalance.set(result.data.core_liquid_balance);
 		}

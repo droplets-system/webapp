@@ -12,10 +12,13 @@
 		accountRamPurchasePrice,
 		accountRamDepositPrice,
 		contractBalanceToUse,
+		contractRamPurchaseAmount,
+		contractRamPurchasePrice,
 		accountRamPurchaseAmount,
 		totalRamRequired
 	} from '../generate';
 	import { page } from '$app/stores';
+	import { Lock, Unlock } from 'svelte-lucide';
 
 	export const devmode = $page.url.searchParams.has('dev');
 </script>
@@ -24,7 +27,7 @@
 	<table class="table">
 		<thead>
 			<tr>
-				<th class="text-right table-cell-fit"></th>
+				<th class="text-right">{$t('common.estimated')}</th>
 				{#if devmode}
 					<th class="text-center">{$t('common.balance')}</th>
 				{/if}
@@ -36,7 +39,7 @@
 		</thead>
 		<tbody>
 			<tr>
-				<th class="table-cell-fit text-right px-6">Drops</th>
+				<th class=" text-right px-6"> Drops </th>
 				{#if devmode}
 					<td class="text-center">
 						{#if $accountContractBalance}
@@ -59,7 +62,7 @@
 			</tr>
 			{#if $createBound && $accountTokenBalance && $accountRamPurchasePrice.value > 0}
 				<tr>
-					<th class="table-cell-fit text-right px-6">EOS ({$t('common.balance')})</th>
+					<th class=" text-right px-6">EOS ({$t('common.balance')})</th>
 					{#if devmode}
 						<td class="text-center">
 							{#if $accountTokenBalance}
@@ -83,7 +86,7 @@
 			{/if}
 			{#if !$createBound && $accountTokenBalance && $accountRamDepositPrice.value > 0}
 				<tr>
-					<th class="table-cell-fit text-right px-6">EOS ({$t('common.balance')})</th>
+					<th class=" text-right px-6">EOS ({$t('common.balance')})</th>
 					{#if devmode}
 						<td class="text-center">
 							{#if $accountTokenBalance}
@@ -107,7 +110,7 @@
 			{/if}
 			{#if !$createBound && $accountContractBalance && $contractBalanceToUse > 0}
 				<tr>
-					<th class="table-cell-fit text-right px-6">RAM (Credits)</th>
+					<th class=" text-right px-6">RAM (Credits)</th>
 					{#if devmode}
 						<td>
 							{#if $accountContractBalance}
@@ -126,7 +129,7 @@
 			{/if}
 			{#if $createBound && $accountRamPurchaseAmount > 0}
 				<tr>
-					<th class="table-cell-fit text-right px-6">RAM (Purchase)</th>
+					<th class=" text-right px-6">RAM (Purchase)</th>
 					{#if devmode}
 						<td class="text-center">
 							{#if $accountRamBalance}
@@ -150,7 +153,7 @@
 			{/if}
 			{#if $createBound && $totalRamRequired > 0}
 				<tr>
-					<th class="table-cell-fit text-right px-6">RAM ({$t('common.used')})</th>
+					<th class=" text-right px-6">RAM ({$t('common.used')})</th>
 					{#if devmode}
 						<td class="text-center">
 							{($accountRamBalance + $accountRamPurchaseAmount).toLocaleString()}

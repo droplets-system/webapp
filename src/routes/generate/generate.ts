@@ -1,10 +1,16 @@
 import { ramPricePlusFee } from '$lib/bancor';
-import { ramPurchaseBuffer, sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
+import {
+	maximumBatchSize,
+	ramPurchaseBuffer,
+	sizeDropRow,
+	sizeDropRowPurchase
+} from '$lib/constants';
 import {
 	DropsContract,
 	accountContractRam,
 	accountRamBalance,
-	accountTokenBalance
+	accountTokenBalance,
+	sessionKey
 } from '$lib/wharf';
 import { Asset } from '@wharfkit/session';
 import { type Writable, writable, derived, type Readable } from 'svelte/store';
@@ -14,7 +20,7 @@ export const randomDrop: Writable<string> = writable(randomName());
 export const createBound: Writable<boolean> = writable(true);
 export const dropsAmount: Writable<number> = writable(1);
 export const customDropsAmount: Writable<boolean> = writable(false);
-export const customDropsValue: Writable<number> = writable();
+export const customDropsValue: Writable<number> = writable(1);
 export const lastResult: Writable<DropsContract.Types.generate_return_value | undefined> =
 	writable();
 export const lastResultId: Writable<string | undefined> = writable();
@@ -63,8 +69,8 @@ export const totalRamRequired: Readable<number> = derived(
 );
 
 // The amount of RAM needed to complete the transaction
-// totalRamToPurchase = totalRamRequired - accountContractBalance.ram_bytes
-export const totalRamToPurchase: Readable<number> = derived(
+// contractRamPurchaseAmount = totalRamRequired - accountContractBalance.ram_bytes
+export const contractRamPurchaseAmount: Readable<number> = derived(
 	[createBound, totalRamRequired, accountContractRam],
 	([$createBound, $totalRamRequired, $accountContractRam]) => {
 		if (!$createBound && $totalRamRequired && $totalRamRequired > $accountContractRam) {
@@ -78,19 +84,16 @@ export const totalRamToPurchase: Readable<number> = derived(
 	}
 );
 
-// export const totalRamCreditsToUse: Readable<number> = derived(
-// 	[createBound, totalRamRequired, accountContractBalance],
-// 	([$createBound, $totalRamRequired, $accountContractBalance]) => {
-// 		if (!$createBound && $totalRamRequired && $accountContractBalance) {
-// 			if ($totalRamRequired > Number($accountContractBalance.ram_bytes)) {
-// 				return Number($accountContractBalance.ram_bytes);
-// 			} else {
-// 				return $totalRamRequired;
-// 			}
-// 		}
-// 		return 0;
-// 	}
-// );
+export const contractRamPurchasePrice: Readable<Asset> = derived(
+	[contractRamPurchaseAmount, ramPricePlusFee],
+	([$contractRamPurchaseAmount, $ramPricePlusFee]) => {
+		let amount = $contractRamPurchaseAmount * $ramPricePlusFee;
+		if (amount > 0 && amount < 3) {
+			amount = 3;
+		}
+		return Asset.fromUnits(amount, '4,EOS');
+	}
+);
 
 export const contractBalanceToUse: Readable<number> = derived(
 	[accountContractRam, totalRamRequired],
@@ -109,11 +112,13 @@ export const accountBalanceToUse: Readable<number> = derived(
 );
 
 export const accountRamPurchaseAmount: Readable<number> = derived(
-	[accountBalanceToUse, contractBalanceToUse, totalRamRequired],
-	([$accountBalanceToUse, $contractBalanceToUse, $totalRamRequired]) => {
-		const amount = $totalRamRequired - $contractBalanceToUse - $accountBalanceToUse;
-		if (amount > 0) {
-			return amount + ramPurchaseBuffer;
+	[createBound, accountBalanceToUse, contractBalanceToUse, totalRamRequired],
+	([$createBound, $accountBalanceToUse, $contractBalanceToUse, $totalRamRequired]) => {
+		if ($createBound) {
+			const amount = $totalRamRequired - $contractBalanceToUse - $accountBalanceToUse;
+			if (amount > 0) {
+				return amount + ramPurchaseBuffer;
+			}
 		}
 		return 0;
 	}
@@ -190,6 +195,13 @@ export const canGenerate: Readable<boolean> = derived(
 		} else {
 			return general && $hasEnoughTokens;
 		}
+	}
+);
+
+export const actionRequiresSessionKey = derived(
+	[derivedDropsAmount, sessionKey],
+	([$derivedDropsAmount, $sessionKey]) => {
+		return $derivedDropsAmount > maximumBatchSize && !$sessionKey;
 	}
 );
 

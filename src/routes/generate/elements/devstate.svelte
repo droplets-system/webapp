@@ -1,5 +1,4 @@
 <script>
-	import { accountRamBalance, accountTokenBalance, accountContractRam } from '$lib/wharf';
 	import {
 		derivedDropsAmount,
 		hasEnoughAccountRAM,
@@ -7,7 +6,8 @@
 		hasEnoughTokens,
 		contractBalanceToUse,
 		totalRamRequired,
-		totalRamToPurchase,
+		contractRamPurchaseAmount,
+		contractRamPurchasePrice,
 		accountRamPurchaseAmount,
 		accountRamPurchasePrice,
 		requiresDeposit,
@@ -17,15 +17,7 @@
 
 <div>
 	<div class="table-container space-y-4">
-		<div class="h4">balances</div>
-		<table class="table">
-			<tbody>
-				<tr><td>accountRamBalance</td><td>{$accountRamBalance}</td></tr>
-				<tr><td>accountTokenBalance</td><td>{$accountTokenBalance}</td></tr>
-				<tr><td>accountContractRam</td><td>{$accountContractRam}</td></tr>
-			</tbody>
-		</table>
-		<div class="h4">funding</div>
+		<div class="h3 text-blue-300 font-bold">State</div>
 		<table class="table">
 			<tbody>
 				<tr><td>derivedDropsAmount</td><td>{$derivedDropsAmount}</td></tr>
@@ -34,7 +26,8 @@
 				<tr><td>hasEnoughTokens</td><td>{$hasEnoughTokens}</td></tr>
 				<tr><td>contractBalanceToUse</td><td>{$contractBalanceToUse}</td></tr>
 				<tr><td>totalRamRequired</td><td>{$totalRamRequired}</td></tr>
-				<tr><td>totalRamToPurchase</td><td>{$totalRamToPurchase}</td></tr>
+				<tr><td>contractRamPurchaseAmount</td><td>{$contractRamPurchaseAmount}</td></tr>
+				<tr><td>contractRamPurchasePrice</td><td>{$contractRamPurchasePrice}</td></tr>
 				<tr><td>accountRamPurchaseAmount</td><td>{$accountRamPurchaseAmount}</td></tr>
 				<tr><td>accountRamPurchasePrice</td><td>{$accountRamPurchasePrice}</td></tr>
 				<tr><td>requiresDeposit</td><td>{$requiresDeposit}</td></tr>
