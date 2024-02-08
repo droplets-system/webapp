@@ -2,6 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { initializeStores, Drawer, getDrawerStore, Modal } from '@skeletonlabs/skeleton';
 	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
+	import { PUBLIC_CHAIN_NAME } from '$env/static/public';
 
 	import { setLocale, t } from '$lib/i18n';
 	import { login, session, restore } from '$lib/wharf';
@@ -93,9 +94,15 @@
 				{/if}
 			</svelte:fragment>
 		</AppBar>
-		<aside class="alert bg-gradient-to-br variant-gradient-error-warning rounded-none">
-			<div class="text-center w-full font-bold">{$t('common.testnetnotice')}</div>
-		</aside>
+		{#if PUBLIC_CHAIN_NAME === 'Jungle4'}
+			<aside class="alert bg-gradient-to-br variant-gradient-error-warning rounded-none">
+				<div class="text-center w-full font-bold">{$t('common.testnetnotice')}</div>
+			</aside>
+		{:else}
+			<aside class="alert bg-gradient-to-br variant-gradient-secondary-tertiary rounded-none">
+				<div class="text-center w-full font-bold">{$t('common.mainnetnotice')}</div>
+			</aside>
+		{/if}
 	</svelte:fragment>
 	<svelte:fragment slot="sidebarLeft">
 		<img src="/logo.png" class="w-48 px-6 py-4" />
