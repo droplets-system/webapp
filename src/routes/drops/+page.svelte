@@ -82,98 +82,104 @@
 	let tabSet: number = 1;
 </script>
 
-<div class="container mx-auto grid lg:grid-cols-4 2xl:grid-cols-7">
-	<div class="lg:col-span-2 2xl:col-span-3 p-8 space-y-10">
-		<div class="space-y-4">
-			<MyItems />
+<!-- <div class="container p-4 sm:p-8 lg:p-16">
+	<div class="mx-auto py-4 sm:p-4 space-y-4 bg-surface-900 rounded-lg shadow-xl">
+		<div class="h1 flex items-center px-2 sm:px-6"> -->
+
+<div class="container p-4 sm:p-8 lg:p-16">
+	<div
+		class="mx-auto py-4 sm:p-4 space-y-4 bg-surface-900 rounded-lg shadow-xl grid lg:grid-cols-4 2xl:grid-cols-7"
+	>
+		<div class="lg:col-span-2 2xl:col-span-3">
+			<MyItems format="h1 px-2 sm:px-6 mb-6" />
+			<TabGroup justify="justify-center" flex="flex-auto">
+				<Tab bind:group={tabSet} name="tab1" value={1} on:click={resetSelected}>
+					<svelte:fragment slot="lead">
+						<Combine class={`dark:text-green-400 inline size-6 mr-2`} />
+					</svelte:fragment>
+					<span class="font-bold">{$t('common.transfer')}</span>
+				</Tab>
+				<Tab bind:group={tabSet} name="tab3" value={3} on:click={resetSelected}>
+					<svelte:fragment slot="lead">
+						<Lock class={`dark:text-blue-400 inline size-6 mr-2`} />
+					</svelte:fragment>
+					<span class="font-bold">{$t('common.bind')}</span>
+				</Tab>
+				<Tab bind:group={tabSet} name="tab4" value={4} on:click={resetSelected}>
+					<svelte:fragment slot="lead">
+						<Unlock class={`dark:text-orange-400 inline size-6 mr-2`} />
+					</svelte:fragment>
+					<span class="font-bold">{$t('common.unbind')}</span>
+				</Tab>
+				<Tab bind:group={tabSet} name="tab2" value={2} on:click={resetSelected}>
+					<svelte:fragment slot="lead">
+						<PackageX class={`dark:text-pink-400 inline size-6 mr-2`} />
+					</svelte:fragment>
+					<span class="font-bold">{$t('common.destroy')}</span>
+				</Tab>
+				<svelte:fragment slot="panel">
+					{#if tabSet === 1}
+						<DropTransfer {drops} {selected} {selectingAll} />
+					{:else if tabSet === 2}
+						<DropDestroy {drops} {selected} {selectingAll} />
+					{:else if tabSet === 3}
+						<DropBind {drops} {selected} {selectingAll} />
+					{:else if tabSet === 4}
+						<DropUnbind {drops} {selected} {selectingAll} />
+					{/if}
+				</svelte:fragment>
+			</TabGroup>
 		</div>
-		<TabGroup justify="justify-center" flex="flex-auto">
-			<Tab bind:group={tabSet} name="tab1" value={1} on:click={resetSelected}>
-				<svelte:fragment slot="lead">
-					<Combine class={`dark:text-green-400 inline size-6 mr-2`} />
-				</svelte:fragment>
-				<span class="font-bold">{$t('common.transfer')}</span>
-			</Tab>
-			<Tab bind:group={tabSet} name="tab3" value={3} on:click={resetSelected}>
-				<svelte:fragment slot="lead">
-					<Lock class={`dark:text-blue-400 inline size-6 mr-2`} />
-				</svelte:fragment>
-				<span class="font-bold">{$t('common.bind')}</span>
-			</Tab>
-			<Tab bind:group={tabSet} name="tab4" value={4} on:click={resetSelected}>
-				<svelte:fragment slot="lead">
-					<Unlock class={`dark:text-orange-400 inline size-6 mr-2`} />
-				</svelte:fragment>
-				<span class="font-bold">{$t('common.unbind')}</span>
-			</Tab>
-			<Tab bind:group={tabSet} name="tab2" value={2} on:click={resetSelected}>
-				<svelte:fragment slot="lead">
-					<PackageX class={`dark:text-pink-400 inline size-6 mr-2`} />
-				</svelte:fragment>
-				<span class="font-bold">{$t('common.destroy')}</span>
-			</Tab>
-			<svelte:fragment slot="panel">
-				{#if tabSet === 1}
-					<DropTransfer {drops} {selected} {selectingAll} />
-				{:else if tabSet === 2}
-					<DropDestroy {drops} {selected} {selectingAll} />
-				{:else if tabSet === 3}
-					<DropBind {drops} {selected} {selectingAll} />
-				{:else if tabSet === 4}
-					<DropUnbind {drops} {selected} {selectingAll} />
-				{/if}
-			</svelte:fragment>
-		</TabGroup>
-	</div>
-	<div class="lg:col-span-2 2xl:col-span-4">
-		<div class="p-8">
-			{#if !$session}
-				<div class="p-4 space-y-4">
-					<aside class="alert variant-filled-error">
-						<div><AlertCircle /></div>
-						<div class="alert-message">
-							<h3 class="h3">{$t('common.signinfirst')}</h3>
-							<p>{$t('inventory.signinfirst', { itemnames: $t('common.itemnames') })}</p>
-						</div>
-						<div class="alert-actions"></div>
-					</aside>
-				</div>
-			{:else if !$loaded}
-				<section class="card w-full p-12">
+		<div class="lg:col-span-2 2xl:col-span-4">
+			<div class="p-8">
+				{#if !$session}
 					<div class="p-4 space-y-4">
-						<div class="text-center h2">{$t('common.loading')}</div>
-						<div class="text-center h3">
-							{$dropsLoaded}
-							{$t('common.itemnames')}...
-						</div>
-						<div class="grid grid-cols-3 gap-8">
-							<div class="placeholder animate-pulse" />
-							<div class="placeholder animate-pulse" />
-							<div class="placeholder animate-pulse" />
-						</div>
-						<div class="grid grid-cols-4 gap-4">
-							<div class="placeholder animate-pulse" />
-							<div class="placeholder animate-pulse" />
-							<div class="placeholder animate-pulse" />
-							<div class="placeholder animate-pulse" />
-						</div>
+						<aside class="alert variant-filled-error">
+							<div><AlertCircle /></div>
+							<div class="alert-message">
+								<h3 class="h3">{$t('common.signinfirst')}</h3>
+								<p>{$t('inventory.signinfirst', { itemnames: $t('common.itemnames') })}</p>
+							</div>
+							<div class="alert-actions"></div>
+						</aside>
 					</div>
-				</section>
-			{:else if $drops.length}
-				<div class="space-y-8">
-					<DropsTable {drops} {selected} {selectingAll} />
-				</div>
-			{:else}
-				<div class="p-4 space-y-4">
-					<aside class="alert variant-filled-warning">
-						<div><AlertCircle /></div>
-						<div class="alert-message">
-							<h3 class="h3">{$t('inventory.none', { itemnames: $t('common.itemnames') })}</h3>
+				{:else if !$loaded}
+					<section class="card w-full p-12">
+						<div class="p-4 space-y-4">
+							<div class="text-center h2">{$t('common.loading')}</div>
+							<div class="text-center h3">
+								{$dropsLoaded}
+								{$t('common.itemnames')}...
+							</div>
+							<div class="grid grid-cols-3 gap-8">
+								<div class="placeholder animate-pulse" />
+								<div class="placeholder animate-pulse" />
+								<div class="placeholder animate-pulse" />
+							</div>
+							<div class="grid grid-cols-4 gap-4">
+								<div class="placeholder animate-pulse" />
+								<div class="placeholder animate-pulse" />
+								<div class="placeholder animate-pulse" />
+								<div class="placeholder animate-pulse" />
+							</div>
 						</div>
-						<div class="alert-actions"></div>
-					</aside>
-				</div>
-			{/if}
+					</section>
+				{:else if $drops.length}
+					<div class="space-y-8">
+						<DropsTable {drops} {selected} {selectingAll} />
+					</div>
+				{:else}
+					<div class="p-4 space-y-4">
+						<aside class="alert variant-filled-warning">
+							<div><AlertCircle /></div>
+							<div class="alert-message">
+								<h3 class="h3">{$t('inventory.none', { itemnames: $t('common.itemnames') })}</h3>
+							</div>
+							<div class="alert-actions"></div>
+						</aside>
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>
