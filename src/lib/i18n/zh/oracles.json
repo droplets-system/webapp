@@ -1,0 +1,12 @@
+{
+	"description": "The oracles providing data to the epoch.oracles contract",
+	"epoch": "Epoch",
+	"fromoracles": "provided by oracles",
+	"header": "Oracles",
+	"itemname": "Seed",
+	"oracle": "Oracle",
+	"oraclecommitted": "Committed",
+	"oraclerevealed": "Revealed",
+	"oraclena": "n/a",
+	"oraclewaiting": "Waiting"
+}
