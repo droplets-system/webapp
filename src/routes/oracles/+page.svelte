@@ -16,7 +16,7 @@
 	});
 
 	function loadData() {
-		// loadEpochs();
+		loadEpochs();
 		loadCommits();
 		loadReveals();
 	}
@@ -60,7 +60,7 @@
 	interface EpochState {
 		epoch: UInt64;
 		oracles: OracleState[];
-		drops?: string;
+		seed?: string;
 	}
 
 	const allOracles: Writable<Name[]> = writable();
@@ -90,7 +90,7 @@
 						return {
 							epoch: e.epoch,
 							oracles,
-							drops: e.drops ? String(e.drops) : ''
+							seed: e.seed ? String(e.seed) : ''
 						};
 					})
 					.sort((a, b) => Number(b.epoch) - Number(a.epoch));
@@ -107,9 +107,9 @@
 </script>
 
 <div class="p-8 space-y-4">
-	<div class="h2">{$t('common.oracles')}</div>
+	<div class="h2">{$t('oracles.header')}</div>
 	<p>
-		{$t('common.oraclesdescription')}
+		{$t('oracles.description')}
 	</p>
 	{#if $epochs && $epochs.length && $allOracles}
 		<div class="table-container">
@@ -117,17 +117,17 @@
 				<thead>
 					<tr>
 						<th class="text-center">
-							{$t('common.epoch')}
+							{$t('oracles.epoch')}
 							<div class="text-xs text-slate-400">{$t('common.number')}</div>
 						</th>
 						<th class="text-center">
-							{$t('common.itemname')}
-							<div class="text-xs text-slate-400">{$t('common.fromoracles')}</div>
+							{$t('oracles.itemname')}
+							<div class="text-xs text-slate-400">{$t('oracles.fromoracles')}</div>
 						</th>
 						{#each $allOracles as oracle}
 							<th class="text-center lowercase">
 								<span class="text-xs">{oracle}</span>
-								<div class="text-xs text-slate-400">{$t('common.oracle')}</div>
+								<div class="text-xs text-slate-400">{$t('oracles.oracle')}</div>
 							</th>
 						{/each}
 					</tr>
@@ -137,21 +137,21 @@
 						<tr>
 							<td class="text-center">{epoch.epoch}</td>
 							<td class="text-center">
-								<pre class="text-xs">{epoch.drops}</pre>
+								<pre class="text-xs">{epoch.seed}</pre>
 							</td>
 							{#each $allOracles as oracle}
 								{@const record = epoch.oracles.find((o) => o.oracle.equals(oracle))}
 								<td class="text-center">
 									{#if record}
 										{#if record.reveal}
-											<span class="text-green-500">{$t('common.oraclerevealed')}</span>
+											<span class="text-green-500">{$t('oracles.oraclerevealed')}</span>
 										{:else if record.commit}
-											<span class="text-yellow-500">{$t('common.oraclecommitted')}</span>
+											<span class="text-yellow-500">{$t('oracles.oraclecommitted')}</span>
 										{:else}
-											<span class="text-red-500">{$t('common.oraclewaiting')}</span>
+											<span class="text-red-500">{$t('oracles.oraclewaiting')}</span>
 										{/if}
 									{:else}
-										<span class="text-slate-500">{$t('common.oraclena')}</span>
+										<span class="text-slate-500">{$t('oracles.oraclena')}</span>
 									{/if}
 								</td>
 							{/each}

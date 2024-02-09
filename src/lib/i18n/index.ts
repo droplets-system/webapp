@@ -38,6 +38,12 @@ export const config = {
 			routes: ['/generate'],
 			loader: async () => (await import('./en/generate.json')).default
 		},
+		{
+			locale: 'en',
+			key: 'oracles',
+			routes: ['/oracles'],
+			loader: async () => (await import('./en/oracles.json')).default
+		},
 		// Chinese (Simplified)
 		{
 			locale: 'zh',
@@ -62,6 +68,12 @@ export const config = {
 			routes: ['/generate'],
 			loader: async () => (await import('./zh/generate.json')).default
 		},
+		{
+			locale: 'zh',
+			key: 'oracles',
+			routes: ['/oracles'],
+			loader: async () => (await import('./zh/oracles.json')).default
+		},
 		// Korean
 		{
 			locale: 'kr',
@@ -85,6 +97,12 @@ export const config = {
 			key: 'generate',
 			routes: ['/generate'],
 			loader: async () => (await import('./kr/generate.json')).default
+		},
+		{
+			locale: 'kr',
+			key: 'oracles',
+			routes: ['/oracles'],
+			loader: async () => (await import('./kr/oracles.json')).default
 		}
 	]
 };
