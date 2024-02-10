@@ -12,7 +12,7 @@ import {
 import type {ActionOptions, ContractArgs, PartialBy, Table} from '@wharfkit/contract'
 import {Contract as BaseContract} from '@wharfkit/contract'
 export const abiBlob = Blob.from(
-    'DmVvc2lvOjphYmkvMS4yABUJYWRkb3JhY2xlAAEGb3JhY2xlBG5hbWUHYWR2YW5jZQAACmNoZWNrZXBvY2gAAwdnZW5lc2lzFGJsb2NrX3RpbWVzdGFtcF90eXBlCGR1cmF0aW9uBnVpbnQzMgVlcG9jaAZ1aW50NjQKY2xlYXJ0YWJsZQADCnRhYmxlX25hbWUEbmFtZQVzY29wZQVuYW1lPwhtYXhfcm93cwd1aW50NjQ/BmNvbW1pdAADBm9yYWNsZQRuYW1lBWVwb2NoBnVpbnQ2NAZjb21taXQLY2hlY2tzdW0yNTYKY29tbWl0X3JvdwAEAmlkBnVpbnQ2NAVlcG9jaAZ1aW50NjQGb3JhY2xlBG5hbWUGY29tbWl0C2NoZWNrc3VtMjU2C2NvbXB1dGVoYXNoAAIFZXBvY2gGdWludDY0B3JldmVhbHMIc3RyaW5nW10IZHVyYXRpb24AAQhkdXJhdGlvbgZ1aW50MzIGZW5hYmxlAAEHZW5hYmxlZARib29sCWVwb2NoX3JvdwADBWVwb2NoBnVpbnQ2NAdvcmFjbGVzBm5hbWVbXQRzZWVkC2NoZWNrc3VtMjU2C2ZvcmNlcmV2ZWFsAAIFZXBvY2gGdWludDY0BHNhbHQGc3RyaW5nCGdldGVwb2NoAAAKZ2V0b3JhY2xlcwAABGluaXQAAApvcmFjbGVfcm93AAEGb3JhY2xlBG5hbWUMcmVtb3Zlb3JhY2xlAAEGb3JhY2xlBG5hbWUGcmV2ZWFsAAMGb3JhY2xlBG5hbWUFZXBvY2gGdWludDY0BnJldmVhbAZzdHJpbmcKcmV2ZWFsX3JvdwAEAmlkBnVpbnQ2NAVlcG9jaAZ1aW50NjQGb3JhY2xlBG5hbWUGcmV2ZWFsBnN0cmluZwlzdGF0ZV9yb3cAAwdnZW5lc2lzFGJsb2NrX3RpbWVzdGFtcF90eXBlCGR1cmF0aW9uBnVpbnQzMgdlbmFibGVkBGJvb2wEdGVzdAABBGRhdGEGc3RyaW5nBHdpcGUAABAAAFARmUtTMglhZGRvcmFjbGUAAAAAQKFpdjIHYWR2YW5jZQAAQEO0KohUQwpjaGVja2Vwb2NoAACAisfka1RECmNsZWFydGFibGUAAAAAAGQnJUUGY29tbWl0AAAaNk1lXSVFC2NvbXB1dGVoYXNoAAAAAJO6bK5OCGR1cmF0aW9uAAAAAACoeMxUBmVuYWJsZQAAolFbXYUuXQtmb3JjZXJldmVhbAAAAAAN0aqyYghnZXRlcG9jaAAAAFYRmUuzYgpnZXRvcmFjbGVzAAAAAAAAkN10BGluaXQAoCIyl6pNpboMcmVtb3Zlb3JhY2xlAAAAAABEo7a6BnJldmVhbAAAAAAAAJCxygR0ZXN0AAAAAAAAoKrjBHdpcGUABQAAAABkJyVFA2k2NAAACmNvbW1pdF9yb3cAAAAAgIZoVQNpNjQAAAllcG9jaF9yb3cAAAAAqIjMpQNpNjQAAApvcmFjbGVfcm93AAAAAESjtroDaTY0AAAKcmV2ZWFsX3JvdwAAAAAAlU3GA2k2NAAACXN0YXRlX3JvdwAAAAAEAAAAQKFpdjIJZXBvY2hfcm93ABo2TWVdJUULY2hlY2tzdW0yNTYAAAAN0aqyYgZ1aW50NjQAAFYRmUuzYgZuYW1lW10='
+    'DmVvc2lvOjphYmkvMS4yABYJYWRkb3JhY2xlAAEGb3JhY2xlBG5hbWUHYWR2YW5jZQAACmNsZWFydGFibGUAAwp0YWJsZV9uYW1lBG5hbWUFc2NvcGUFbmFtZT8IbWF4X3Jvd3MHdWludDY0PwZjb21taXQAAwZvcmFjbGUEbmFtZQVlcG9jaAZ1aW50NjQGY29tbWl0C2NoZWNrc3VtMjU2CmNvbW1pdF9yb3cABAJpZAZ1aW50NjQFZXBvY2gGdWludDY0Bm9yYWNsZQRuYW1lBmNvbW1pdAtjaGVja3N1bTI1Ngtjb21wdXRlaGFzaAACBWVwb2NoBnVpbnQ2NAdyZXZlYWxzCHN0cmluZ1tdCGR1cmF0aW9uAAEIZHVyYXRpb24GdWludDMyBmVuYWJsZQABB2VuYWJsZWQEYm9vbAplcG9jaF9pbmZvAAUFZXBvY2gGdWludDY0BXN0YXJ0FGJsb2NrX3RpbWVzdGFtcF90eXBlA2VuZBRibG9ja190aW1lc3RhbXBfdHlwZQRzZWVkC2NoZWNrc3VtMjU2B29yYWNsZXMGbmFtZVtdCWVwb2NoX3JvdwADBWVwb2NoBnVpbnQ2NAdvcmFjbGVzBm5hbWVbXQRzZWVkC2NoZWNrc3VtMjU2C2ZvcmNlcmV2ZWFsAAIFZXBvY2gGdWludDY0BHNhbHQGc3RyaW5nCGdldGVwb2NoAAAMZ2V0ZXBvY2hpbmZvAAEFZXBvY2gHdWludDY0PwpnZXRvcmFjbGVzAAAEaW5pdAAACm9yYWNsZV9yb3cAAQZvcmFjbGUEbmFtZQxyZW1vdmVvcmFjbGUAAQZvcmFjbGUEbmFtZQZyZXZlYWwAAwZvcmFjbGUEbmFtZQVlcG9jaAZ1aW50NjQGcmV2ZWFsBnN0cmluZwpyZXZlYWxfcm93AAQCaWQGdWludDY0BWVwb2NoBnVpbnQ2NAZvcmFjbGUEbmFtZQZyZXZlYWwGc3RyaW5nCXN0YXRlX3JvdwADB2dlbmVzaXMUYmxvY2tfdGltZXN0YW1wX3R5cGUIZHVyYXRpb24GdWludDMyB2VuYWJsZWQEYm9vbAR0ZXN0AAEEZGF0YQZzdHJpbmcEd2lwZQAAEAAAUBGZS1MyCWFkZG9yYWNsZQAAAABAoWl2MgdhZHZhbmNlAACAisfka1RECmNsZWFydGFibGUAAAAAAGQnJUUGY29tbWl0AAAaNk1lXSVFC2NvbXB1dGVoYXNoAAAAAJO6bK5OCGR1cmF0aW9uAAAAAACoeMxUBmVuYWJsZQAAolFbXYUuXQtmb3JjZXJldmVhbAAAAAAN0aqyYghnZXRlcG9jaABA13QN0aqyYgxnZXRlcG9jaGluZm8AAABWEZlLs2IKZ2V0b3JhY2xlcwAAAAAAAJDddARpbml0AKAiMpeqTaW6DHJlbW92ZW9yYWNsZQAAAAAARKO2ugZyZXZlYWwAAAAAAACQscoEdGVzdAAAAAAAAKCq4wR3aXBlAAUAAAAAZCclRQNpNjQAAApjb21taXRfcm93AAAAAICGaFUDaTY0AAAJZXBvY2hfcm93AAAAAKiIzKUDaTY0AAAKb3JhY2xlX3JvdwAAAABEo7a6A2k2NAAACnJldmVhbF9yb3cAAAAAAJVNxgNpNjQAAAlzdGF0ZV9yb3cAAAAABQAAAEChaXYyCWVwb2NoX3JvdwAaNk1lXSVFC2NoZWNrc3VtMjU2AAAADdGqsmIGdWludDY0QNd0DdGqsmIKZXBvY2hfaW5mbwAAVhGZS7NiBm5hbWVbXQ=='
 )
 export const abi = ABI.from(abiBlob)
 export class Contract extends BaseContract {
@@ -43,7 +43,6 @@ export class Contract extends BaseContract {
 export interface ActionNameParams {
     addoracle: ActionParams.addoracle
     advance: ActionParams.advance
-    checkepoch: ActionParams.checkepoch
     cleartable: ActionParams.cleartable
     commit: ActionParams.commit
     computehash: ActionParams.computehash
@@ -51,6 +50,7 @@ export interface ActionNameParams {
     enable: ActionParams.enable
     forcereveal: ActionParams.forcereveal
     getepoch: ActionParams.getepoch
+    getepochinfo: ActionParams.getepochinfo
     getoracles: ActionParams.getoracles
     init: ActionParams.init
     removeoracle: ActionParams.removeoracle
@@ -64,11 +64,6 @@ export namespace ActionParams {
         oracle: NameType
     }
     export interface advance {}
-    export interface checkepoch {
-        genesis: BlockTimestamp
-        duration: UInt32Type
-        epoch: UInt64Type
-    }
     export interface cleartable {
         table_name: NameType
         scope?: NameType
@@ -94,6 +89,9 @@ export namespace ActionParams {
         salt: string
     }
     export interface getepoch {}
+    export interface getepochinfo {
+        epoch?: UInt64Type
+    }
     export interface getoracles {}
     export interface init {}
     export interface removeoracle {
@@ -117,15 +115,6 @@ export namespace Types {
     }
     @Struct.type('advance')
     export class advance extends Struct {}
-    @Struct.type('checkepoch')
-    export class checkepoch extends Struct {
-        @Struct.field(BlockTimestamp)
-        genesis!: BlockTimestamp
-        @Struct.field(UInt32)
-        duration!: UInt32
-        @Struct.field(UInt64)
-        epoch!: UInt64
-    }
     @Struct.type('cleartable')
     export class cleartable extends Struct {
         @Struct.field(Name)
@@ -172,6 +161,19 @@ export namespace Types {
         @Struct.field('bool')
         enabled!: boolean
     }
+    @Struct.type('epoch_info')
+    export class epoch_info extends Struct {
+        @Struct.field(UInt64)
+        epoch!: UInt64
+        @Struct.field(BlockTimestamp)
+        start!: BlockTimestamp
+        @Struct.field(BlockTimestamp)
+        end!: BlockTimestamp
+        @Struct.field(Checksum256)
+        seed!: Checksum256
+        @Struct.field(Name, {array: true})
+        oracles!: Name[]
+    }
     @Struct.type('epoch_row')
     export class epoch_row extends Struct {
         @Struct.field(UInt64)
@@ -190,6 +192,11 @@ export namespace Types {
     }
     @Struct.type('getepoch')
     export class getepoch extends Struct {}
+    @Struct.type('getepochinfo')
+    export class getepochinfo extends Struct {
+        @Struct.field(UInt64, {optional: true})
+        epoch?: UInt64
+    }
     @Struct.type('getoracles')
     export class getoracles extends Struct {}
     @Struct.type('init')
@@ -262,6 +269,7 @@ export interface ActionReturnValues {
     advance: Types.epoch_row
     computehash: Checksum256
     getepoch: UInt64
+    getepochinfo: Types.epoch_info
     getoracles: Name[]
 }
 export type ActionReturnNames = keyof ActionReturnValues
