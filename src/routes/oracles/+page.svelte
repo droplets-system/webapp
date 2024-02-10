@@ -142,16 +142,20 @@
 							{#each $allOracles as oracle}
 								{@const record = epoch.oracles.find((o) => o.oracle.equals(oracle))}
 								<td class="text-center">
-									{#if record}
-										{#if record.reveal}
-											<span class="text-green-500">{$t('oracles.oraclerevealed')}</span>
-										{:else if record.commit}
-											<span class="text-yellow-500">{$t('oracles.oraclecommitted')}</span>
+									{#if epoch.seed && epoch.seed === '0000000000000000000000000000000000000000000000000000000000000000'}
+										{#if record}
+											{#if record.reveal}
+												<span class="text-green-500">{$t('oracles.oraclerevealed')}</span>
+											{:else if record.commit}
+												<span class="text-yellow-500">{$t('oracles.oraclecommitted')}</span>
+											{:else}
+												<span class="text-red-500">{$t('oracles.oraclewaiting')}</span>
+											{/if}
 										{:else}
-											<span class="text-red-500">{$t('oracles.oraclewaiting')}</span>
+											<span class="text-slate-500">{$t('oracles.oraclena')}</span>
 										{/if}
 									{:else}
-										<span class="text-slate-500">{$t('oracles.oraclena')}</span>
+										<span class="text-green-500">{$t('common.complete')}</span>
 									{/if}
 								</td>
 							{/each}

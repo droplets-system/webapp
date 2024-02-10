@@ -9,6 +9,7 @@
 	"contractbalance": "Contract Balance",
 	"contractbalanceexists": "A balance of leftover RAM exists in the Drops contract associated to your account. Click below to claim this balance.",
 	"claim": "Claim Balance",
+	"complete": "Complete",
 	"delta": "Delta",
 	"destroy": "Destroy",
 	"distribution": "Distribution",
