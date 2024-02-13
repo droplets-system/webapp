@@ -1,5 +1,7 @@
 {
-	"title": "Drops: An ecosystem-wide distribution mechanism",
+	"more": "More information",
+	"morep1": "This document will continue to evolve and more information will be added as community feedback is received. This is the start to what is essentially a living white paper for Drops.",
+	"morep2": "For discussion related to this project, a Telegram channel has been created here:",
 	"q1": "What is the Drops system?",
 	"q1p1": "The Drops system is a minimalistic smart contract designed to serve the entire ecosystem.",
 	"q1p2": "At its core, the Drops system is a smart contract that allows anyone to create and manage non-fungible pieces of data which are backed by RAM. This data can stand alone as a unit of value and can be leveraged for its uniqueness in other applications. The sole purpose of the Drops system is to manage this data and enhance its utility.",
@@ -48,7 +50,5 @@
 	"q7p2": "Each Drop created is automatically associated to the epoch it was created in. When a Drop is created it starts in an immature state and will remain that way until the next epoch. Once the next epoch begins, the Drop will be considered mature and can be combined with the epoch seeds provided by the oracles for use in other applications and algorithms.",
 	"q8": "What is an Oracle?",
 	"q8p1": "An oracle is a designated account that is responsible for providing a random seed for each epoch. During each epoch, these oracles participate in a commit and reveal process to add unique salt for use in cryptographic algorithms and other applications.",
-	"more": "More information",
-	"morep1": "This document will continue to evolve and more information will be added as community feedback is received. This is the start to what is essentially a living white paper for Drops.",
-	"morep2": "For discussion related to this project, a Telegram channel has been created here:"
+	"title": "Drops: An ecosystem-wide distribution mechanism"
 }

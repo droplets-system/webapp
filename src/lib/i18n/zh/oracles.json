@@ -6,7 +6,7 @@
 	"itemname": "Seed",
 	"oracle": "Oracle",
 	"oraclecommitted": "Committed",
-	"oraclerevealed": "Revealed",
 	"oraclena": "n/a",
+	"oraclerevealed": "Revealed",
 	"oraclewaiting": "Waiting"
 }

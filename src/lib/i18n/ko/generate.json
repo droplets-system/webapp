@@ -1,10 +1,10 @@
 {
-	"enteramount": "Enter the amount to generate",
-	"selectbound": "Select bound vs unbound",
 	"description": "Generate bound {{itemnames}} using your own RAM or unbound drops using tokens.",
+	"enteramount": "Enter the amount to generate",
 	"ramcost": "RAM Cost",
-	"signinfirst": "You must be signed in to generate {{itemnames}}.",
-	"togenerate": "Number of {{itemnames}} to generate",
 	"reqsk": "Requires a Session Key",
-	"reqskdesc": "In order to generate more than {{max}} {{itemnames}} automatically you must configure a Session Key. Go into Settings and click Enable Session Key to enable this feature."
+	"reqskdesc": "In order to generate more than {{max}} {{itemnames}} automatically you must configure a Session Key. Go into Settings and click Enable Session Key to enable this feature.",
+	"selectbound": "Select bound vs unbound",
+	"signinfirst": "You must be signed in to generate {{itemnames}}.",
+	"togenerate": "Number of {{itemnames}} to generate"
 }
