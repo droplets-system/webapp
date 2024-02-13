@@ -56,7 +56,7 @@
 					<tr>
 						<td class="text-right">{index + 1}</td>
 						<td>
-							<a href={`https://bloks.io/account/{$row.account}`}>
+							<a href={`https://bloks.io/account/${row.account}`}>
 								<span class="font-bold text-blue-300">
 									{row.owner}
 								</span>
