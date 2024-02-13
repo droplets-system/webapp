@@ -234,7 +234,7 @@
 		<p class="px-2 sm:px-6">
 			{$t('generate.description', { itemnames: $t('common.itemnames') })}
 			<a class="hidden underline" href="#" on:click={help} on:keyup={help} tabindex="0"
-				>{$t('common.leanmore')}</a
+				>{$t('common.learnmore')}</a
 			>
 		</p>
 		<div class={'p-2 sm:p-6 shadow-xl rounded-lg lg:grid lg:grid-cols-2 lg:gap-16'}>

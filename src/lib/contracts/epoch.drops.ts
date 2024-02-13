@@ -12,7 +12,7 @@ import {
 import type {ActionOptions, ContractArgs, PartialBy, Table} from '@wharfkit/contract'
 import {Contract as BaseContract} from '@wharfkit/contract'
 export const abiBlob = Blob.from(
-    'DmVvc2lvOjphYmkvMS4yAA8JYWRkb3JhY2xlAAEGb3JhY2xlBG5hbWUKY2xlYXJ0YWJsZQADCnRhYmxlX25hbWUEbmFtZQVzY29wZQVuYW1lPwhtYXhfcm93cwd1aW50NjQ/BmNvbW1pdAADBm9yYWNsZQRuYW1lBWVwb2NoBnVpbnQ2NAZjb21taXQLY2hlY2tzdW0yNTYKY29tbWl0X3JvdwAEAmlkBnVpbnQ2NAVlcG9jaAZ1aW50NjQGb3JhY2xlBG5hbWUGY29tbWl0C2NoZWNrc3VtMjU2BmVuYWJsZQABB2VuYWJsZWQEYm9vbAllcG9jaF9yb3cABAVlcG9jaAZ1aW50NjQHb3JhY2xlcwZuYW1lW10JY29tcGxldGVkBnVpbnQ2NARzZWVkC2NoZWNrc3VtMjU2C2Vwb2NobGVuZ3RoAAELZXBvY2hsZW5ndGgGdWludDMyBGluaXQAAApvcmFjbGVfcm93AAEGb3JhY2xlBG5hbWUMcmVtb3Zlb3JhY2xlAAEGb3JhY2xlBG5hbWUKcmV2ZWFsX3JvdwAEAmlkBnVpbnQ2NAVlcG9jaAZ1aW50NjQGb3JhY2xlBG5hbWUGcmV2ZWFsBnN0cmluZwlzdGF0ZV9yb3cAAwdnZW5lc2lzFGJsb2NrX3RpbWVzdGFtcF90eXBlC2Vwb2NobGVuZ3RoBnVpbnQzMgdlbmFibGVkBGJvb2wOc3Vic2NyaWJlcl9yb3cAAQpzdWJzY3JpYmVyBG5hbWUEdGVzdAABBGRhdGEGc3RyaW5nBHdpcGUAAAkAAFARmUtTMglhZGRvcmFjbGUAAICKx+RrVEQKY2xlYXJ0YWJsZQAAAAAAZCclRQZjb21taXQAAAAAAKh4zFQGZW5hYmxlAABaZlPFhmhVC2Vwb2NobGVuZ3RoAAAAAAAAkN10BGluaXQAoCIyl6pNpboMcmVtb3Zlb3JhY2xlAAAAAAAAkLHKBHRlc3QAAAAAAACgquMEd2lwZQAGAAAAAGQnJUUDaTY0AAAKY29tbWl0X3JvdwAAAACAhmhVA2k2NAAACWVwb2NoX3JvdwAAAACoiMylA2k2NAAACm9yYWNsZV9yb3cAAAAARKO2ugNpNjQAAApyZXZlYWxfcm93AAAAAACVTcYDaTY0AAAJc3RhdGVfcm93AMBVx12Ej8YDaTY0AAAOc3Vic2NyaWJlcl9yb3cAAAAAAA=='
+    'DmVvc2lvOjphYmkvMS4yABYJYWRkb3JhY2xlAAEGb3JhY2xlBG5hbWUHYWR2YW5jZQAACmNsZWFydGFibGUAAwp0YWJsZV9uYW1lBG5hbWUFc2NvcGUFbmFtZT8IbWF4X3Jvd3MHdWludDY0PwZjb21taXQAAwZvcmFjbGUEbmFtZQVlcG9jaAZ1aW50NjQGY29tbWl0C2NoZWNrc3VtMjU2CmNvbW1pdF9yb3cABAJpZAZ1aW50NjQFZXBvY2gGdWludDY0Bm9yYWNsZQRuYW1lBmNvbW1pdAtjaGVja3N1bTI1Ngtjb21wdXRlaGFzaAACBWVwb2NoBnVpbnQ2NAdyZXZlYWxzCHN0cmluZ1tdCGR1cmF0aW9uAAEIZHVyYXRpb24GdWludDMyBmVuYWJsZQABB2VuYWJsZWQEYm9vbAplcG9jaF9pbmZvAAUFZXBvY2gGdWludDY0BXN0YXJ0FGJsb2NrX3RpbWVzdGFtcF90eXBlA2VuZBRibG9ja190aW1lc3RhbXBfdHlwZQRzZWVkC2NoZWNrc3VtMjU2B29yYWNsZXMGbmFtZVtdCWVwb2NoX3JvdwADBWVwb2NoBnVpbnQ2NAdvcmFjbGVzBm5hbWVbXQRzZWVkC2NoZWNrc3VtMjU2C2ZvcmNlcmV2ZWFsAAIFZXBvY2gGdWludDY0BHNhbHQGc3RyaW5nCGdldGVwb2NoAAAMZ2V0ZXBvY2hpbmZvAAEFZXBvY2gHdWludDY0PwpnZXRvcmFjbGVzAAAEaW5pdAAACm9yYWNsZV9yb3cAAQZvcmFjbGUEbmFtZQxyZW1vdmVvcmFjbGUAAQZvcmFjbGUEbmFtZQZyZXZlYWwAAwZvcmFjbGUEbmFtZQVlcG9jaAZ1aW50NjQGcmV2ZWFsBnN0cmluZwpyZXZlYWxfcm93AAQCaWQGdWludDY0BWVwb2NoBnVpbnQ2NAZvcmFjbGUEbmFtZQZyZXZlYWwGc3RyaW5nCXN0YXRlX3JvdwADB2dlbmVzaXMUYmxvY2tfdGltZXN0YW1wX3R5cGUIZHVyYXRpb24GdWludDMyB2VuYWJsZWQEYm9vbAR0ZXN0AAEEZGF0YQZzdHJpbmcEd2lwZQAAEAAAUBGZS1MyCWFkZG9yYWNsZQAAAABAoWl2MgdhZHZhbmNlAACAisfka1RECmNsZWFydGFibGUAAAAAAGQnJUUGY29tbWl0AAAaNk1lXSVFC2NvbXB1dGVoYXNoAAAAAJO6bK5OCGR1cmF0aW9uAAAAAACoeMxUBmVuYWJsZQAAolFbXYUuXQtmb3JjZXJldmVhbAAAAAAN0aqyYghnZXRlcG9jaABA13QN0aqyYgxnZXRlcG9jaGluZm8AAABWEZlLs2IKZ2V0b3JhY2xlcwAAAAAAAJDddARpbml0AKAiMpeqTaW6DHJlbW92ZW9yYWNsZQAAAAAARKO2ugZyZXZlYWwAAAAAAACQscoEdGVzdAAAAAAAAKCq4wR3aXBlAAUAAAAAZCclRQNpNjQAAApjb21taXRfcm93AAAAAICGaFUDaTY0AAAJZXBvY2hfcm93AAAAAKiIzKUDaTY0AAAKb3JhY2xlX3JvdwAAAABEo7a6A2k2NAAACnJldmVhbF9yb3cAAAAAAJVNxgNpNjQAAAlzdGF0ZV9yb3cAAAAABQAAAEChaXYyCWVwb2NoX3JvdwAaNk1lXSVFC2NoZWNrc3VtMjU2AAAADdGqsmIGdWludDY0QNd0DdGqsmIKZXBvY2hfaW5mbwAAVhGZS7NiBm5hbWVbXQ=='
 )
 export const abi = ABI.from(abiBlob)
 export class Contract extends BaseContract {
@@ -30,18 +30,31 @@ export class Contract extends BaseContract {
     ): Action {
         return super.action(name, data, options)
     }
+    readonly<T extends ActionReturnNames>(
+        name: T,
+        data?: ActionNameParams[T]
+    ): ActionReturnValues[T] {
+        return super.readonly(name, data) as unknown as ActionReturnValues[T]
+    }
     table<T extends TableNames>(name: T, scope?: NameType): Table<RowType<T>> {
         return super.table(name, scope, TableMap[name])
     }
 }
 export interface ActionNameParams {
     addoracle: ActionParams.addoracle
+    advance: ActionParams.advance
     cleartable: ActionParams.cleartable
     commit: ActionParams.commit
+    computehash: ActionParams.computehash
+    duration: ActionParams.duration
     enable: ActionParams.enable
-    epochlength: ActionParams.epochlength
+    forcereveal: ActionParams.forcereveal
+    getepoch: ActionParams.getepoch
+    getepochinfo: ActionParams.getepochinfo
+    getoracles: ActionParams.getoracles
     init: ActionParams.init
     removeoracle: ActionParams.removeoracle
+    reveal: ActionParams.reveal
     test: ActionParams.test
     wipe: ActionParams.wipe
 }
@@ -50,6 +63,7 @@ export namespace ActionParams {
     export interface addoracle {
         oracle: NameType
     }
+    export interface advance {}
     export interface cleartable {
         table_name: NameType
         scope?: NameType
@@ -60,15 +74,33 @@ export namespace ActionParams {
         epoch: UInt64Type
         commit: Checksum256Type
     }
+    export interface computehash {
+        epoch: UInt64Type
+        reveals: string[]
+    }
+    export interface duration {
+        duration: UInt32Type
+    }
     export interface enable {
         enabled: boolean
     }
-    export interface epochlength {
-        epochlength: UInt32Type
+    export interface forcereveal {
+        epoch: UInt64Type
+        salt: string
     }
+    export interface getepoch {}
+    export interface getepochinfo {
+        epoch?: UInt64Type
+    }
+    export interface getoracles {}
     export interface init {}
     export interface removeoracle {
         oracle: NameType
+    }
+    export interface reveal {
+        oracle: NameType
+        epoch: UInt64Type
+        reveal: string
     }
     export interface test {
         data: string
@@ -81,6 +113,8 @@ export namespace Types {
         @Struct.field(Name)
         oracle!: Name
     }
+    @Struct.type('advance')
+    export class advance extends Struct {}
     @Struct.type('cleartable')
     export class cleartable extends Struct {
         @Struct.field(Name)
@@ -110,10 +144,35 @@ export namespace Types {
         @Struct.field(Checksum256)
         commit!: Checksum256
     }
+    @Struct.type('computehash')
+    export class computehash extends Struct {
+        @Struct.field(UInt64)
+        epoch!: UInt64
+        @Struct.field('string', {array: true})
+        reveals!: string[]
+    }
+    @Struct.type('duration')
+    export class duration extends Struct {
+        @Struct.field(UInt32)
+        duration!: UInt32
+    }
     @Struct.type('enable')
     export class enable extends Struct {
         @Struct.field('bool')
         enabled!: boolean
+    }
+    @Struct.type('epoch_info')
+    export class epoch_info extends Struct {
+        @Struct.field(UInt64)
+        epoch!: UInt64
+        @Struct.field(BlockTimestamp)
+        start!: BlockTimestamp
+        @Struct.field(BlockTimestamp)
+        end!: BlockTimestamp
+        @Struct.field(Checksum256)
+        seed!: Checksum256
+        @Struct.field(Name, {array: true})
+        oracles!: Name[]
     }
     @Struct.type('epoch_row')
     export class epoch_row extends Struct {
@@ -121,16 +180,25 @@ export namespace Types {
         epoch!: UInt64
         @Struct.field(Name, {array: true})
         oracles!: Name[]
-        @Struct.field(UInt64)
-        completed!: UInt64
         @Struct.field(Checksum256)
         seed!: Checksum256
     }
-    @Struct.type('epochlength')
-    export class epochlength extends Struct {
-        @Struct.field(UInt32)
-        epochlength!: UInt32
+    @Struct.type('forcereveal')
+    export class forcereveal extends Struct {
+        @Struct.field(UInt64)
+        epoch!: UInt64
+        @Struct.field('string')
+        salt!: string
     }
+    @Struct.type('getepoch')
+    export class getepoch extends Struct {}
+    @Struct.type('getepochinfo')
+    export class getepochinfo extends Struct {
+        @Struct.field(UInt64, {optional: true})
+        epoch?: UInt64
+    }
+    @Struct.type('getoracles')
+    export class getoracles extends Struct {}
     @Struct.type('init')
     export class init extends Struct {}
     @Struct.type('oracle_row')
@@ -142,6 +210,15 @@ export namespace Types {
     export class removeoracle extends Struct {
         @Struct.field(Name)
         oracle!: Name
+    }
+    @Struct.type('reveal')
+    export class reveal extends Struct {
+        @Struct.field(Name)
+        oracle!: Name
+        @Struct.field(UInt64)
+        epoch!: UInt64
+        @Struct.field('string')
+        reveal!: string
     }
     @Struct.type('reveal_row')
     export class reveal_row extends Struct {
@@ -159,14 +236,9 @@ export namespace Types {
         @Struct.field(BlockTimestamp)
         genesis!: BlockTimestamp
         @Struct.field(UInt32)
-        epochlength!: UInt32
+        duration!: UInt32
         @Struct.field('bool')
         enabled!: boolean
-    }
-    @Struct.type('subscriber_row')
-    export class subscriber_row extends Struct {
-        @Struct.field(Name)
-        subscriber!: Name
     }
     @Struct.type('test')
     export class test extends Struct {
@@ -182,7 +254,6 @@ export const TableMap = {
     oracle: Types.oracle_row,
     reveal: Types.reveal_row,
     state: Types.state_row,
-    subscriber: Types.subscriber_row,
 }
 export interface TableTypes {
     commit: Types.commit_row
@@ -190,8 +261,15 @@ export interface TableTypes {
     oracle: Types.oracle_row
     reveal: Types.reveal_row
     state: Types.state_row
-    subscriber: Types.subscriber_row
 }
 export type RowType<T> = T extends keyof TableTypes ? TableTypes[T] : any
 export type ActionNames = keyof ActionNameParams
 export type TableNames = keyof TableTypes
+export interface ActionReturnValues {
+    advance: Types.epoch_row
+    computehash: Checksum256
+    getepoch: UInt64
+    getepochinfo: Types.epoch_info
+    getoracles: Name[]
+}
+export type ActionReturnNames = keyof ActionReturnValues

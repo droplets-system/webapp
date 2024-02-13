@@ -1,6 +1,6 @@
 import { type Writable, writable, derived, type Readable, readable, get } from 'svelte/store';
 import { epochContract, dropsContract } from './wharf';
-import type { Checksum256, UInt64 } from '@wharfkit/session';
+import { Serializer, Checksum256, type UInt64 } from '@wharfkit/session';
 
 export const epochNumber: Writable<UInt64> = writable();
 export const epochEnd: Writable<Date> = writable();
@@ -17,7 +17,7 @@ export const epochRemaining = readable(epochEnd, function start(set) {
 			epochWaitingAdvance.set(true);
 			lastEpochRevealed.set(false);
 			lastEpochDrop.set(undefined);
-			// loadEpoch();
+			loadEpoch();
 		}
 		set(r);
 	}, 1000);
@@ -65,15 +65,14 @@ export function formatClockValue(value: number) {
 }
 
 export async function loadEpoch() {
-	const state = await dropsContract.table('state').get();
-	if (state && !state.epoch.equals(get(epochNumber))) {
-		epochNumber.set(state.epoch);
-		const epoch = await dropsContract.table('epoch').get(state.epoch);
-		if (epoch) {
-			epochEnd.set(new Date(epoch.end.toMilliseconds()));
+	try {
+		const epoch = await epochContract.readonly('getepochinfo');
+		if (!epoch.epoch.equals(get(epochNumber))) {
+			epochNumber.set(epoch.epoch);
+			epochEnd.set(epoch.end.toDate());
 			epochWaitingAdvance.set(false);
 		}
-	}
+	} catch (e) {}
 }
 
 export const lastEpoch: Readable<UInt64 | undefined> = derived(epochNumber, ($epochNumber) => {
@@ -92,8 +91,11 @@ lastEpochRevealed.subscribe((revealed: boolean) => {
 					.table('epoch')
 					.get(get(lastEpoch))
 					.then((epoch) => {
-						if (epoch?.completed.equals(1)) {
-							lastEpochDrop.set(epoch.drops);
+						if (
+							epoch &&
+							!epoch.seed.equals('0000000000000000000000000000000000000000000000000000000000000000')
+						) {
+							lastEpochDrop.set(epoch.seed);
 							lastEpochRevealed.set(true);
 							clearInterval(interval);
 						} else {
@@ -112,8 +114,10 @@ export const lastEpochRevealer = readable(lastEpochRevealed, function start(set)
 				.table('epoch')
 				.get(get(lastEpoch))
 				.then((epoch) => {
-					if (epoch?.completed.equals(1)) {
-						lastEpochDrop.set(epoch.drops);
+					if (
+						!epoch.seed.equals('0000000000000000000000000000000000000000000000000000000000000000')
+					) {
+						lastEpochDrop.set(epoch.seed);
 						set(true);
 					} else {
 						set(false);

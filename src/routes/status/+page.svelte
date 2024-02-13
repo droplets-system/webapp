@@ -9,9 +9,21 @@
 		epochRemainingSeconds,
 		lastEpoch,
 		lastEpochRevealed,
-		lastEpochDrop
+		lastEpochDrop,
+		loadEpoch
 	} from '$lib/epoch';
 	import { t } from '$lib/i18n';
+	import { onMount, onDestroy } from 'svelte';
+
+	let epochInterval;
+	onMount(() => {
+		loadEpoch();
+		epochInterval = setInterval(loadEpoch, 5000);
+	});
+
+	onDestroy(() => {
+		clearInterval(epochInterval);
+	});
 </script>
 
 <p>Status</p>
