@@ -76,33 +76,33 @@ export const config = {
 		},
 		// Korean
 		{
-			locale: 'kr',
+			locale: 'ko',
 			key: 'common',
-			loader: async () => (await import('./kr/common.json')).default
+			loader: async () => (await import('./ko/common.json')).default
 		},
 		{
-			locale: 'kr',
+			locale: 'ko',
 			key: 'home',
 			routes: ['/'],
-			loader: async () => (await import('./kr/home.json')).default
+			loader: async () => (await import('./ko/home.json')).default
 		},
 		{
-			locale: 'kr',
+			locale: 'ko',
 			key: 'inventory',
 			routes: ['/drops', '/drops/list'],
-			loader: async () => (await import('./kr/inventory.json')).default
+			loader: async () => (await import('./ko/inventory.json')).default
 		},
 		{
-			locale: 'kr',
+			locale: 'ko',
 			key: 'generate',
 			routes: ['/generate'],
-			loader: async () => (await import('./kr/generate.json')).default
+			loader: async () => (await import('./ko/generate.json')).default
 		},
 		{
-			locale: 'kr',
+			locale: 'ko',
 			key: 'oracles',
 			routes: ['/oracles'],
-			loader: async () => (await import('./kr/oracles.json')).default
+			loader: async () => (await import('./ko/oracles.json')).default
 		}
 	]
 };
