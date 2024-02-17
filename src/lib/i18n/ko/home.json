@@ -46,9 +46,9 @@
 	"q6p5b": "시간이 지날 수록 Drops가 생성되고 파괴됨에 따라 천천히 증가합니다.",
 	"q6p5c": "이 추가적인 RAM은 추가 데이터 저장을 위해 컨트랙트에 의해 활용될 것입니다.",
 	"q7": "에포크(Epoch) 란 무엇인가요?",
-	"q7p1": "An epoch is the simple numeric representation of time since the Drops project launched. When the Drops project launches, epoch 1 will begin. After a set amount of time passes, the epoch will advance to 2. This process will repeat for the life of the smart contract.",
-	"q7p2": "Each Drop created is automatically associated to the epoch it was created in. When a Drop is created it starts in an immature state and will remain that way until the next epoch. Once the next epoch begins, the Drop will be considered mature and can be combined with the epoch seeds provided by the oracles for use in other applications and algorithms.",
-	"q8": "What is an Oracle?",
-	"q8p1": "An oracle is a designated account that is responsible for providing a random seed for each epoch. During each epoch, these oracles participate in a commit and reveal process to add unique salt for use in cryptographic algorithms and other applications.",
-	"title": "Drops: An ecosystem-wide distribution mechanism"
+	"q7p1": "에포크는 Drops 프로젝트가 시작된 이후의 시간을 간단한 숫자로 표현한 것입니다. Drops 프로젝트가 시작되면 에포크 1이 시작됩니다. 설정된 시간이 지나면 에포크는 2로 진행됩니다. 이 프로세스는 스마트 컨트랙트가 유지되는 동안 반복됩니다.",
+	"q7p2": "생성된 각 Drop은 생성된 에포크와 자동으로 연결됩니다. Drop이 생성되면 미성숙 상태에서 시작하여 다음 에포크 까지 그 상태가 유지됩니다. 다음 에포크가 시작되면 Drop은 성숙한 것으로 간주되며 다른 응용 프로그램 및 알고리즘에서 사용하기 위해 오라클에서 제공하는 에포크 시드와 결합될 수 있습니다.",
+	"q8": "오라클이란 무엇인가요?",
+	"q8p1": "오라클은 각 에포크 마다 무작위 씨드를 제공하는 역할을 하는 지정된 계정입니다. 각 에포크 동안, 이 오라클들은 암호 알고리즘 및 기타 애플리케이션에서 사용할 고유한 솔트를 추가하기 위해 커밋(commit) 및 공개(reveal) 과정에 참여합니다.",
+	"title": "Drops: 생태계 전체에 걸친 분배 메커니즘"
 }
