@@ -49,11 +49,11 @@
 	"ske_p3": "설정 페이지에서 언제든지 이 세션 키를 제거할 수 있습니다.",
 	"testnetnotice": "Jungle 4에서 실행중인 테스트넷 버젼",
 	"total": "전체",
-	"transacterror": "Error processing transaction",
-	"transactsuccess": "Transaction Successful",
-	"transfer": "Transfer",
-	"unbind": "Unbind",
-	"unbound": "Unbound",
-	"used": "Used",
+	"transacterror": "트랜잭션 처리 중 오류 발생",
+	"transactsuccess": "트랜잭션 성공",
+	"transfer": "전송",
+	"unbind": "연동 해제",
+	"unbound": "언바운드",
+	"used": "사용됨",
 	"zh": "中文"
 }
