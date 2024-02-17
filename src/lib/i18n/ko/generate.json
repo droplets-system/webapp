@@ -1,10 +1,10 @@
 {
-	"description": "Generate bound {{itemnames}} using your own RAM or unbound drops using tokens.",
-	"enteramount": "Enter the amount to generate",
-	"ramcost": "RAM Cost",
-	"reqsk": "Requires a Session Key",
-	"reqskdesc": "In order to generate more than {{max}} {{itemnames}} automatically you must configure a Session Key. Go into Settings and click Enable Session Key to enable this feature.",
-	"selectbound": "Select bound vs unbound",
-	"signinfirst": "You must be signed in to generate {{itemnames}}.",
-	"togenerate": "Number of {{itemnames}} to generate"
+	"description": "자신이 소유한 RAM을 사용하여 바운드 {{itemnames}} 를 생성하거나 토큰을 사용하여 언바운드 drops를 생성하세요.",
+	"enteramount": "생성할 수량을 입력하세요.",
+	"ramcost": "RAM 가격",
+	"reqsk": "세션 키가 필요합니다.",
+	"reqskdesc": "{{max}} 개 이상의 {{itemnames}} 을 자동으로 생성하려면 세션 키를 설정해야 합니다. 설정으로 이동하여 세션 키 활성화를 클릭하고 이 기능을 활성화하세요.",
+	"selectbound": "바운드 혹은 언바운드 선택",
+	"signinfirst": "{{itemnames}} 을 생성하기 위해서는 로그인 해야합니다.",
+	"togenerate": "생성할 {{itemnames}} 수량"
 }
