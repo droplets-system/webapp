@@ -6,5 +6,14 @@
 	"reqskdesc": "{{max}} 개 이상의 {{itemnames}} 을 자동으로 생성하려면 세션 키를 설정해야 합니다. 설정으로 이동하여 세션 키 활성화를 클릭하고 이 기능을 활성화하세요.",
 	"selectbound": "바운드 혹은 언바운드 선택",
 	"signinfirst": "{{itemnames}} 을 생성하기 위해서는 로그인 해야합니다.",
-	"togenerate": "생성할 {{itemnames}} 수량"
+	"togenerate": "생성할 {{itemnames}} 수량",
+	"topurchase": "to purchase an additional",
+	"willcost": "This will cost",
+	"willgenerate": "You will generate",
+	"willsend": "Your account will send",
+	"willsendto": "to the Drops contract to purchase the required",
+	"bytesofram": "bytes of RAM.",
+	"bytesoframaccount": "bytes of RAM from your account.",
+	"willuse": "This action will use",
+	"willusecontractbalance": "bytes of RAM from your Drops contract balance."
 }
