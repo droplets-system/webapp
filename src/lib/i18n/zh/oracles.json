@@ -1,5 +1,5 @@
 {
-	"description": "The oracles providing data to the epoch.oracles contract",
+	"description": "关键：描述\n-> 描述",
 	"epoch": "Epoch",
 	"fromoracles": "provided by oracles",
 	"header": "Oracles",
