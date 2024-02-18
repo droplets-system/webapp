@@ -1,4 +1,5 @@
 <script>
+	import { t } from '$lib/i18n';
 	import {
 		account,
 		accountContractDrops,
@@ -14,29 +15,39 @@
 	<div class="table-container">
 		<table class="table table-compact">
 			<thead>
-				<tr><th colspan="2">Balances</th></tr>
+				<tr><th colspan="2">{$t('common.balances')}</th></tr>
 			</thead>
 			<tbody>
-				<tr><td>EOS</td><td>{$accountTokenBalance}</td></tr>
-				<tr><td>Drops</td><td>{$accountContractDrops}</td></tr>
+				<tr><td>{$t('common.eos')}</td><td>{$accountTokenBalance}</td></tr>
+				<tr><td>{$t('common.itemnames')}</td><td>{$accountContractDrops}</td></tr>
 			</tbody>
 			<thead>
-				<tr><th colspan="2">RAM</th></tr>
+				<tr><th colspan="2">{$t('common.ramkb')}</th></tr>
 			</thead>
 			<tbody>
 				{#if $accountRamBalance}
-					<tr><td>Account</td><td>{$accountRamBalance.toLocaleString()} bytes</td></tr>
+					<tr
+						><td>{$t('common.account')}</td><td
+							>{$accountRamBalance.toLocaleString()} {$t('common.bytes')}</td
+						></tr
+					>
 				{/if}
 				{#if $accountContractRam > 0}
-					<tr><td>Contract</td><td>{$accountContractRam.toLocaleString()} bytes</td></tr>
+					<tr
+						><td>{$t('common.contract')}</td><td
+							>{$accountContractRam.toLocaleString()} {$t('common.bytes')}</td
+						></tr
+					>
 				{/if}
 			</tbody>
 			<thead>
-				<tr><th colspan="2">Resources</th></tr>
+				<tr><th colspan="2">{$t('common.resources')}</th></tr>
 			</thead>
 			<tbody>
-				<tr><td>CPU</td><td>{($accountCpuBalance / 1000).toLocaleString()} ms</td></tr>
-				<tr><td>NET</td><td>{$accountNetBalance / 1000} kb</td></tr>
+				<tr
+					><td>{$t('common.cpu')}</td><td>{($accountCpuBalance / 1000).toLocaleString()} ms</td></tr
+				>
+				<tr><td>{$t('common.net')}</td><td>{$accountNetBalance / 1000} kb</td></tr>
 			</tbody>
 		</table>
 	</div>

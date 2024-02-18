@@ -239,7 +239,10 @@
 		</p>
 		<div class={'p-2 sm:p-6 shadow-xl rounded-lg lg:grid lg:grid-cols-2 lg:gap-16'}>
 			<div class="space-y-8 mb-12">
-				<div class="h3 font-bold text-blue-300">Generate Drops</div>
+				<div class="h3 font-bold text-blue-300">
+					{$t('common.generate')}
+					{$t('common.itemnames')}
+				</div>
 				<GenerateForm {generate} />
 				{#if !$lastResult && !$actionRequiresSessionKey}
 					<Explainer />
@@ -249,7 +252,7 @@
 				{/if}
 			</div>
 			<div class="space-y-6">
-				<div class="h3 font-bold text-blue-300">My Account</div>
+				<div class="h3 font-bold text-blue-300">{$t('common.myaccount')}</div>
 				<Account />
 				{#if devmode}
 					<DevState />
