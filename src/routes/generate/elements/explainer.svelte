@@ -10,51 +10,53 @@
 		accountRamPurchaseAmount,
 		totalRamRequired
 	} from '../generate';
+	import { t } from '$lib/i18n';
 </script>
 
 <div class="prose text-white dark:prose-invert">
 	{#if $derivedDropsAmount}
-		You will generate <span class="text-green-200 font-bold"
-			>{$derivedDropsAmount.toLocaleString()}</span
-		>
-		new
+		{$t('generate.willgenerate')}
+		<span class="text-green-200 font-bold">{$derivedDropsAmount.toLocaleString()}</span>
+		{$t('common.new')}
 		{#if $createBound}
 			<strong class="text-blue-300">
 				<Lock class="inline size-4" />
-				bound
+				{$t('common.bound')}
 			</strong>
 		{:else}
 			<strong class="text-yellow-300">
 				<Unlock class="inline size-4" />
-				unbound
+				{$t('common.unbound')}
 			</strong>
 		{/if}
-		Drops.
+		{$t('common.itemnames')}.
 	{/if}
 
 	{#if !$createBound && $contractBalanceToUse}
-		This action will use <span class="font-bold text-orange-200"
-			>{$contractBalanceToUse.toLocaleString()}</span
-		> bytes of RAM from your Drops contract balance.
+		{$t('generate.willuse')}
+		<span class="font-bold text-orange-200">{$contractBalanceToUse.toLocaleString()}</span>
+		{$t('generate.willusecontractbalance')}
 	{/if}
 
 	{#if !$createBound && $contractRamPurchaseAmount}
-		Your account will send <span class="text-red-300 font-bold">{$contractRamPurchasePrice}</span>
-		to the Drops contract to purchase the required
+		{$t('generate.willsend')}
+		<span class="text-red-300 font-bold">{$contractRamPurchasePrice}</span>
+		{$t('generate.willsendto')}
 		<span class="text-green-300 font-bold">{$contractRamPurchaseAmount.toLocaleString()}</span>
-		bytes of RAM.
+		{$t('generate.bytesofram')}
 	{/if}
 
 	{#if $createBound && $accountRamPurchasePrice.value > 0}
-		This will cost <span class="text-red-300 font-bold">{$accountRamPurchasePrice}</span> to
-		purchase an additional
+		{$t('generate.willcost')}
+		<span class="text-red-300 font-bold">{$accountRamPurchasePrice}</span>
+		{$t('generate.topurchase')}
 		<span class="text-green-300 font-bold">{$accountRamPurchaseAmount.toLocaleString()}</span>
-		bytes of RAM.
+		{$t('generate.bytesofram')}
 	{/if}
 
 	{#if $createBound && $totalRamRequired}
-		This action will use <span class="text-red-300 font-bold"
-			>{$totalRamRequired.toLocaleString()}</span
-		> bytes of RAM from your account.
+		{$t('generate.willuse')}
+		<span class="text-red-300 font-bold">{$totalRamRequired.toLocaleString()}</span>
+		{$t('generate.bytesoframaccount')}
 	{/if}
 </div>

@@ -1,12 +1,12 @@
 {
-	"description": "The oracles providing data to the epoch.oracles contract",
-	"epoch": "Epoch",
-	"fromoracles": "provided by oracles",
-	"header": "Oracles",
-	"itemname": "Seed",
-	"oracle": "Oracle",
-	"oraclecommitted": "Committed",
-	"oraclena": "n/a",
-	"oraclerevealed": "Revealed",
-	"oraclewaiting": "Waiting"
+	"description": "Epoch.oracles 컨트랙트에 데이터를 제공하는 오라클",
+	"epoch": "에포크(Epoch)",
+	"fromoracles": "오라클에 의해 제공됨.",
+	"header": "오라클",
+	"itemname": "씨드",
+	"oracle": "오라클",
+	"oraclecommitted": "등록됨",
+	"oraclena": "해당 없음",
+	"oraclerevealed": "공개됨",
+	"oraclewaiting": "기다리는 중"
 }

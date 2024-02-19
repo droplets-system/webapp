@@ -6,5 +6,14 @@
 	"reqskdesc": "In order to generate more than {{max}} {{itemnames}} automatically you must configure a Session Key. Go into Settings and click Enable Session Key to enable this feature.",
 	"selectbound": "Select bound vs unbound",
 	"signinfirst": "You must be signed in to generate {{itemnames}}.",
-	"togenerate": "Number of {{itemnames}} to generate"
+	"togenerate": "Number of {{itemnames}} to generate",
+	"topurchase": "to purchase an additional",
+	"willcost": "This will cost",
+	"willgenerate": "You will generate",
+	"willsend": "Your account will send",
+	"willsendto": "to the Drops contract to purchase the required",
+	"bytesofram": "bytes of RAM.",
+	"bytesoframaccount": "bytes of RAM from your account.",
+	"willuse": "This action will use",
+	"willusecontractbalance": "bytes of RAM from your Drops contract balance."
 }
