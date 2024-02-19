@@ -1,12 +1,12 @@
 {
 	"description": "向 epoch.oracles 合约提供数据的预言机",
-	"epoch": "Epoch",
-	"fromoracles": "provided by oracles",
+	"epoch": "纪元",
+	"fromoracles": "由 oracles 提供",
 	"header": "Oracles",
-	"itemname": "Seed",
-	"oracle": "Oracle",
-	"oraclecommitted": "Committed",
+	"itemname": "种子",
+	"oracle": "预言机",
+	"oraclecommitted": "已提交",
 	"oraclena": "n/a",
-	"oraclerevealed": "Revealed",
-	"oraclewaiting": "Waiting"
+	"oraclerevealed": "已发布",
+	"oraclewaiting": "等待中"
 }
