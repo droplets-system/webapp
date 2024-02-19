@@ -1,5 +1,5 @@
 {
-	"description": "关键：描述\n-> 描述",
+	"description": "向 epoch.oracles 合约提供数据的预言机",
 	"epoch": "Epoch",
 	"fromoracles": "provided by oracles",
 	"header": "Oracles",
