@@ -20,7 +20,7 @@
 	"q3p2f": "procedural generation",
 	"q3p2g": "techniques.",
 	"q3p3": "The system itself is agnostic to the use of Drops in other applications. It is up to the creators of those applications to decide how to use Drops.",
-	"q4": "How do I create a Drop?",
+	"q4": "如何创建 Drop？",
 	"q4p1": "Drops can be created on the Generate page. This page allows users to select the number of drops to create and shows a detailed breakdown of the token/resource costs involved.",
 	"q4p2": "Currently offers two methods to create a Drop.",
 	"q4p3a": "Use tokens to purchase RAM automatically",
