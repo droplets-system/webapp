@@ -1,5 +1,5 @@
 {
-	"description": "使用您自己的 RAM 生成绑定的 {{itemnames}} 或消耗代币生成未绑定的 Drops。",
+	"description": "使用您自己的 RAM 生成绑定的 {{itemnames}} 或消耗代币生成未绑定的 Droplets。",
 	"enteramount": "输入要生成的金额",
 	"ramcost": "RAM 成本",
 	"reqsk": "需要一个 Session 密钥",
@@ -11,9 +11,9 @@
 	"willcost": "这将花费",
 	"willgenerate": "您将生成",
 	"willsend": "您的账户将被发送",
-	"willsendto": "到 Drops 合约购买所需的",
+	"willsendto": "到 Droplets 合约购买所需的",
 	"bytesofram": "RAM 字节",
 	"bytesoframaccount": "您的帐户的 RAM 字节.",
 	"willuse": "这个操作将会使用",
-	"willusecontractbalance": "从您的 Drop 合约余额中的 RAM 字节。"
+	"willusecontractbalance": "从您的 Droplet 合约余额中的 RAM 字节。"
 }

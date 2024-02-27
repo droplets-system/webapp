@@ -18,8 +18,8 @@
 				<tr><th colspan="2">{$t('common.balances')}</th></tr>
 			</thead>
 			<tbody>
-				<tr><td>{$t('common.eos')}</td><td>{$accountTokenBalance}</td></tr>
-				<tr><td>{$t('common.itemnames')}</td><td>{$accountContractDrops}</td></tr>
+				<tr><td>EOS</td><td>{$accountTokenBalance}</td></tr>
+				<tr><td>{$t('common.itemnames')}</td><td>{$accountContractDrops.toLocaleString()}</td></tr>
 			</tbody>
 			<thead>
 				<tr><th colspan="2">{$t('common.ramkb')}</th></tr>
@@ -47,7 +47,9 @@
 				<tr
 					><td>{$t('common.cpu')}</td><td>{($accountCpuBalance / 1000).toLocaleString()} ms</td></tr
 				>
-				<tr><td>{$t('common.net')}</td><td>{$accountNetBalance / 1000} kb</td></tr>
+				<tr
+					><td>{$t('common.net')}</td><td>{($accountNetBalance / 1000).toLocaleString()} kb</td></tr
+				>
 			</tbody>
 		</table>
 	</div>

@@ -1,5 +1,5 @@
 {
-	"description": "자신이 소유한 RAM을 사용하여 바운드 {{itemnames}} 를 생성하거나 토큰을 사용하여 언바운드 drops를 생성하세요.",
+	"description": "자신이 소유한 RAM을 사용하여 바운드 {{itemnames}} 를 생성하거나 토큰을 사용하여 언바운드 Droplets를 생성하세요.",
 	"enteramount": "생성할 수량을 입력하세요.",
 	"ramcost": "RAM 가격",
 	"reqsk": "세션 키가 필요합니다.",
@@ -11,7 +11,7 @@
 	"willcost": "이 작업은",
 	"willgenerate": "귀하는 다음을 생성하게 됩니다:",
 	"willsend": "귀하의 계정은",
-	"willsendto": "를 Drops 컨트랙트에 전송하게 되며 이는 Drops 컨트랙트 잔액에서 필요한",
+	"willsendto": "를 Droplets 컨트랙트에 전송하게 되며 이는 Droplets 컨트랙트 잔액에서 필요한",
 	"bytesofram": "바이트의 RAM을 구매하게 됩니다.",
 	"bytesoframaccount": "바이트의 RAM을 사용하게 됩니다.",
 	"willuse": "이 작업은 귀하의 계정에서",

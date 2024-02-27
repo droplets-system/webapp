@@ -39,9 +39,11 @@
 			</a>
 		</li>
 		<li
-			class={$page.url.pathname === '/drops' ? activeClasses + 'border-green-500' : inactiveClasses}
+			class={$page.url.pathname === '/droplets'
+				? activeClasses + 'border-green-500'
+				: inactiveClasses}
 		>
-			<a href="/drops" on:click={drawerClose}>
+			<a href="/droplets" on:click={drawerClose}>
 				<MyItems format="h4" size={6} />
 			</a>
 		</li>

@@ -1,5 +1,5 @@
 {
-	"description": "Generate bound {{itemnames}} using your own RAM or unbound drops using tokens.",
+	"description": "Generate bound {{itemnames}} using your own RAM or unbound Droplets using tokens.",
 	"enteramount": "Enter the amount to generate",
 	"ramcost": "RAM Cost",
 	"reqsk": "Requires a Session Key",
@@ -11,9 +11,9 @@
 	"willcost": "This will cost",
 	"willgenerate": "You will generate",
 	"willsend": "Your account will send",
-	"willsendto": "to the Drops contract to purchase the required",
+	"willsendto": "to the Droplets contract to purchase the required",
 	"bytesofram": "bytes of RAM.",
 	"bytesoframaccount": "bytes of RAM from your account.",
 	"willuse": "This action will use",
-	"willusecontractbalance": "bytes of RAM from your Drops contract balance."
+	"willusecontractbalance": "bytes of RAM from your Droplets contract balance."
 }
