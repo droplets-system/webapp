@@ -29,7 +29,7 @@ export const config = {
 		{
 			locale: 'en',
 			key: 'inventory',
-			routes: ['/drops', '/drops/list'],
+			routes: ['/droplets', '/droplets/list'],
 			loader: async () => (await import('./en/inventory.json')).default
 		},
 		{
@@ -59,7 +59,7 @@ export const config = {
 		{
 			locale: 'zh',
 			key: 'inventory',
-			routes: ['/drops', '/drops/list'],
+			routes: ['/droplets', '/droplets/list'],
 			loader: async () => (await import('./zh/inventory.json')).default
 		},
 		{
@@ -89,7 +89,7 @@ export const config = {
 		{
 			locale: 'ko',
 			key: 'inventory',
-			routes: ['/drops', '/drops/list'],
+			routes: ['/droplets', '/droplets/list'],
 			loader: async () => (await import('./ko/inventory.json')).default
 		},
 		{

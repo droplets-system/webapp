@@ -94,7 +94,7 @@
 				</div>
 			</div>
 			<a
-				href={`/drops/list`}
+				href={`/droplets/list`}
 				type="button"
 				class="btn variant-filled w-full bg-gradient-to-br from-green-500 to-blue-400 box-decoration-clone"
 			>
