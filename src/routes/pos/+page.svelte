@@ -5,7 +5,13 @@
 
 	import { t } from '$lib/i18n';
 	import ProofOfDrop from '$lib/components/headers/pos.svelte';
-	import { DropsContract, session, dropsContract, contractKit } from '$lib/wharf';
+	import {
+		DropsContract,
+		session,
+		dropsContract,
+		contractKit,
+		accountContractBalance
+	} from '$lib/wharf';
 	import { hex2bin } from '$lib/compute';
 	import {
 		epochNumber,
@@ -153,19 +159,26 @@
 	}
 
 	async function claim() {
-		const action = dropsContract.action('destroy', {
-			owner: $session?.actor,
-			drops_ids: $validdrops.map((s) => s.seed),
-			memo: '',
-			to_notify: 'token.gm'
-		});
-		const result = await $session.transact({ action });
-
-		loaded.set(false);
-		setTimeout(() => {
-			loadBalance();
-			loaddrops($lastEpochDrop);
-		}, 1000);
+		if ($session) {
+			const action = dropsContract.action('destroy', {
+				owner: $session?.actor,
+				drops_ids: $validdrops.map((s) => s.seed),
+				memo: '',
+				to_notify: 'token.gm'
+			});
+			$session.transact({ action });
+			accountContractBalance.update((current) => {
+				return {
+					...current,
+					ram_bytes: 0
+				};
+			});
+			loaded.set(false);
+			setTimeout(() => {
+				loadBalance();
+				loaddrops($lastEpochDrop);
+			}, 1000);
+		}
 	}
 </script>
 
