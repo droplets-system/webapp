@@ -162,7 +162,7 @@
 		if ($session) {
 			const action = dropsContract.action('destroy', {
 				owner: $session?.actor,
-				drops_ids: $validdrops.map((s) => s.seed),
+				droplet_ids: $validdrops.map((s) => s.seed),
 				memo: '',
 				to_notify: 'token.gm'
 			});

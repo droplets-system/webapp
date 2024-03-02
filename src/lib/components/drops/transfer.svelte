@@ -49,7 +49,7 @@
 			const action = dropsContract.action('transfer', {
 				from: $session?.actor,
 				to,
-				drops_ids: Object.keys($selected),
+				droplet_ids: Object.keys($selected),
 				memo: ''
 			});
 

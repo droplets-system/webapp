@@ -107,7 +107,7 @@
 			actions.push(
 				dropsContract.action('unbind', {
 					owner: $session?.actor,
-					drops_ids: Object.keys($selected)
+					droplet_ids: Object.keys($selected)
 				})
 			);
 
