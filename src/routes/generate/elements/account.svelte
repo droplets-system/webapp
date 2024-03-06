@@ -53,20 +53,22 @@
 			</thead>
 			<tbody>
 				<tr><td>EOS</td><td>{$accountTokenBalance}</td></tr>
-				<tr><td>{$t('common.itemnames')}</td><td>{$accountContractDrops.toLocaleString()}</td></tr>
-			</tbody>
-			<thead>
-				<tr><th colspan="2">{$t('common.ramkb')}</th></tr>
-			</thead>
-			<tbody>
 				{#if $accountRamBalance}
-					<tr
-						><td>{$t('common.account')}</td><td
-							>{$accountRamBalance.toLocaleString()} {$t('common.bytes')}</td
-						></tr
-					>
+					<tr>
+						<td>RAM {$t('common.bytes')}</td>
+						<td>{$accountRamBalance.toLocaleString()}</td>
+					</tr>
 				{/if}
-				{#if $accountContractRam > 0}
+				<tr
+					><td>{$t('common.itemnames')}</td><td>{$accountContractDrops.toLocaleString()} bytes</td
+					></tr
+				>
+			</tbody>
+			{#if $accountContractRam > 0}
+				<thead>
+					<tr><th colspan="2">{$t('common.ramkb')}</th></tr>
+				</thead>
+				<tbody>
 					<tr>
 						<td>{$t('common.contract')}</td>
 						<td>
@@ -81,8 +83,8 @@
 							</button>
 						</td>
 					</tr>
-				{/if}
-			</tbody>
+				</tbody>
+			{/if}
 			<thead>
 				<tr><th colspan="2">{$t('common.resources')}</th></tr>
 			</thead>

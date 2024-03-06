@@ -19,6 +19,7 @@
 	"rambalanceuse": "Your RAM contract balance to use",
 	"ramtobuy": "RAM purchase cost",
 	"ramtorelease": "Your RAM that will be released",
+	"ramtotransfer": "RAM that will be transferred",
 	"ramtouse": "Your RAM that will be used",
 	"ramused": "RAM used",
 	"signinfirst": "You must be signed in to view your {{itemnames}}.",

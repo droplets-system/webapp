@@ -8,6 +8,7 @@
 		contractRamPurchasePrice,
 		accountRamPurchasePrice,
 		accountRamPurchaseAmount,
+		accountRamTransferAmount,
 		totalRamRequired
 	} from '../generate';
 	import { t } from '$lib/i18n';
@@ -38,20 +39,26 @@
 		{$t('generate.willusecontractbalance')}
 	{/if}
 
-	{#if !$createBound && $contractRamPurchaseAmount}
+	<!-- {#if !$createBound && $contractRamPurchaseAmount}
 		{$t('generate.willsend')}
 		<span class="text-red-300 font-bold">{$contractRamPurchasePrice}</span>
 		{$t('generate.willsendto')}
 		<span class="text-green-300 font-bold">{$contractRamPurchaseAmount.toLocaleString()}</span>
 		{$t('generate.bytesofram')}
-	{/if}
+	{/if} -->
 
-	{#if $createBound && $accountRamPurchasePrice.value > 0}
+	{#if $accountRamPurchasePrice.value > 0}
 		{$t('generate.willcost')}
 		<span class="text-red-300 font-bold">{$accountRamPurchasePrice}</span>
 		{$t('generate.topurchase')}
 		<span class="text-green-300 font-bold">{$accountRamPurchaseAmount.toLocaleString()}</span>
 		{$t('generate.bytesofram')}
+	{/if}
+
+	{#if !$createBound && $accountRamTransferAmount}
+		{$t('generate.willsend')}
+		<span class="text-red-300 font-bold">{$accountRamTransferAmount.toLocaleString()}</span>
+		{$t('generate.bytesoframcontract')}
 	{/if}
 
 	{#if $createBound && $totalRamRequired}

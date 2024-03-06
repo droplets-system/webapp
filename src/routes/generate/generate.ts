@@ -45,24 +45,10 @@ export const derivedDropsAmount: Readable<number> = derived(
 );
 
 export const totalRamRequired: Readable<number> = derived(
-	[createBound, derivedDropsAmount, accountContractRam],
-	([$createBound, $derivedDropsAmount, $accountContractRam]) => {
+	[derivedDropsAmount],
+	([$derivedDropsAmount]) => {
 		if ($derivedDropsAmount) {
-			/*
-			 * If the account has enough of a RAM balance to cover the cost of minting, then we can use the actual
-			 * size of the drop row as the RAM requirement using `sizeDropRow`.
-			 *
-			 * If the account does not have enough RAM balance to cover the cost of minting, then we need to use the
-			 * size of the drop row as the RAM requirement using `sizeDropRowPurchase`. This adds additional RAM as a
-			 * purchase buffer to prevent rounding errors that happen in the bancor algorithm.
-			 */
-			const ramRequiredWithBalance = $derivedDropsAmount * sizeDropRow;
-			if (!$createBound && $accountContractRam < ramRequiredWithBalance) {
-				const ramRequiredWithoutBalance = $derivedDropsAmount * sizeDropRowPurchase;
-				return ramRequiredWithoutBalance;
-			} else {
-				return ramRequiredWithBalance;
-			}
+			return $derivedDropsAmount * sizeDropRow;
 		}
 		return 0;
 	}
@@ -112,12 +98,23 @@ export const accountBalanceToUse: Readable<number> = derived(
 );
 
 export const accountRamPurchaseAmount: Readable<number> = derived(
-	[createBound, accountBalanceToUse, contractBalanceToUse, totalRamRequired],
-	([$createBound, $accountBalanceToUse, $contractBalanceToUse, $totalRamRequired]) => {
-		if ($createBound) {
-			const amount = $totalRamRequired - $contractBalanceToUse - $accountBalanceToUse;
+	[accountBalanceToUse, contractBalanceToUse, totalRamRequired],
+	([$accountBalanceToUse, $contractBalanceToUse, $totalRamRequired]) => {
+		const amount = $totalRamRequired - $contractBalanceToUse - $accountBalanceToUse;
+		if (amount > 0) {
+			return amount + ramPurchaseBuffer;
+		}
+		return 0;
+	}
+);
+
+export const accountRamTransferAmount: Readable<number> = derived(
+	[createBound, contractBalanceToUse, totalRamRequired],
+	([$createBound, $contractBalanceToUse, $totalRamRequired]) => {
+		if (!$createBound) {
+			const amount = $totalRamRequired - $contractBalanceToUse;
 			if (amount > 0) {
-				return amount + ramPurchaseBuffer;
+				return amount;
 			}
 		}
 		return 0;

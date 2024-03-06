@@ -17,6 +17,8 @@ webapp:
 codegen:
 	npx @wharfkit/cli generate --json ../drops/build/$(CONTRACT_CORE).abi --url $(NODE_URL) $(CONTRACT_CORE_ACCOUNT) -f src/lib/contracts/$(CONTRACT_CORE).ts
 	npx @wharfkit/cli generate --json ../epoch/build/$(CONTRACT_EPOCH).abi --url $(NODE_URL) $(CONTRACT_EPOCH_ACCOUNT) -f src/lib/contracts/$(CONTRACT_EPOCH).ts
+	npx @wharfkit/cli generate --url $(NODE_URL) eosio -f src/lib/contracts/eosio.ts
+	npx @wharfkit/cli generate --url $(NODE_URL) eosio.token -f src/lib/contracts/eosio.token.ts
 
 dev:
 	yarn dev

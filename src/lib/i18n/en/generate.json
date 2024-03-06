@@ -13,6 +13,7 @@
 	"willsend": "Your account will send",
 	"willsendto": "to the Droplets contract to purchase the required",
 	"bytesofram": "bytes of RAM.",
+	"bytesoframcontract": "bytes of RAM to the Droplets Contract.",
 	"bytesoframaccount": "bytes of RAM from your account.",
 	"willuse": "This action will use",
 	"willusecontractbalance": "bytes of RAM from your Droplets contract balance."

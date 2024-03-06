@@ -9,11 +9,11 @@
 		session,
 		sessionKey,
 		dropsContract,
-		tokenContract,
 		accountContractRam,
-		loadAccountData
+		loadAccountData,
+		systemContract
 	} from '$lib/wharf';
-	import { sizeDropRowPurchase } from '$lib/constants';
+	import { sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
 	import { dropsPricePlusFee, ramPricePlusFee } from '$lib/bancor';
 
 	const unbinding = writable(false);
@@ -23,7 +23,7 @@
 
 	interface UnbindResult {
 		unbound: number;
-		cost: Asset;
+		ram_used: Int64;
 		ram_released: Int64;
 		txid: string;
 	}
@@ -59,22 +59,33 @@
 		}
 	);
 
-	const estimatedRAM = derived(numBoundSelected, ($numBoundSelected) => {
+	const estimatedRAMPurchase = derived(numBoundSelected, ($numBoundSelected) => {
 		return sizeDropRowPurchase * $numBoundSelected;
 	});
 
+	const estimatedRAMTransfer = derived(numBoundSelected, ($numBoundSelected) => {
+		return sizeDropRow * $numBoundSelected;
+	});
+
 	const contractBalanceToUse: Readable<number> = derived(
-		[accountContractRam, estimatedRAM],
-		([$accountContractRam, $estimatedRAM]) => {
-			const canCoverAll = $accountContractRam >= $estimatedRAM;
-			return $accountContractRam ? (canCoverAll ? $estimatedRAM : $accountContractRam) : 0;
+		[accountContractRam, estimatedRAMPurchase],
+		([$accountContractRam, $estimatedRAMPurchase]) => {
+			const canCoverAll = $accountContractRam >= $estimatedRAMPurchase;
+			return $accountContractRam ? (canCoverAll ? $estimatedRAMPurchase : $accountContractRam) : 0;
+		}
+	);
+
+	const accountRamTransferAmount: Readable<number> = derived(
+		[contractBalanceToUse, estimatedRAMTransfer],
+		([$contractBalanceToUse, $estimatedRAMTransfer]) => {
+			return $estimatedRAMTransfer - $contractBalanceToUse;
 		}
 	);
 
 	const accountRamPurchaseAmount: Readable<number> = derived(
-		[contractBalanceToUse, estimatedRAM],
-		([$contractBalanceToUse, $estimatedRAM]) => {
-			return $estimatedRAM - $contractBalanceToUse;
+		[contractBalanceToUse, estimatedRAMPurchase],
+		([$contractBalanceToUse, $estimatedRAMPurchase]) => {
+			return $estimatedRAMPurchase - $contractBalanceToUse;
 		}
 	);
 
@@ -90,9 +101,9 @@
 	);
 
 	const requiresDeposit = derived(
-		[accountContractRam, estimatedRAM],
-		([$accountContractRam, $estimatedRAM]) => {
-			return $accountContractRam < $estimatedRAM;
+		[accountContractRam, estimatedRAMTransfer],
+		([$accountContractRam, $estimatedRAMTransfer]) => {
+			return $accountContractRam < $estimatedRAMTransfer;
 		}
 	);
 
@@ -113,10 +124,10 @@
 
 			if ($requiresDeposit) {
 				actions.unshift(
-					tokenContract.action('transfer', {
+					systemContract.action('ramtransfer', {
 						from: $session.actor,
 						to: 'drops',
-						quantity: $accountRamPurchasePrice,
+						bytes: $accountRamTransferAmount,
 						memo: String($session.actor)
 					})
 				);
@@ -152,7 +163,7 @@
 
 						lastUnbindResult.set({
 							unbound: dropsUnbound.length,
-							cost: $accountRamPurchasePrice,
+							ram_used: Int64.from($accountRamTransferAmount),
 							ram_released,
 							txid: String(result.resolved?.transaction.id)
 						});
@@ -183,12 +194,12 @@
 				{#if $isBoundSelected}
 					<tr>
 						<th>{$t('inventory.ramtorelease')}</th>
-						<td>{$estimatedRAM} bytes</td>
+						<td>{$estimatedRAMTransfer} bytes</td>
 					</tr>
 					{#if $requiresDeposit}
 						<tr>
-							<th>{$t('inventory.ramtobuy')}</th>
-							<td>{$accountRamPurchasePrice}</td>
+							<th>{$t('inventory.ramtotransfer')}</th>
+							<td>{$accountRamTransferAmount} bytes</td>
 						</tr>
 					{/if}
 					{#if $contractBalanceToUse > 0}
