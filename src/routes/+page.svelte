@@ -65,7 +65,7 @@
 		<p>{$t('home.morep1')}</p>
 		<p>{$t('home.morep2')}</p>
 		<p>
-			<a href="https://t.me/dropscontract">https://t.me/dropscontract</a>
+			<a href="https://t.me/dropletsapp">https://t.me/dropletsapp</a>
 		</p>
 	</article>
 </div>
