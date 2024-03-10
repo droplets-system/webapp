@@ -59,10 +59,7 @@
 						<td>{$accountRamBalance.toLocaleString()}</td>
 					</tr>
 				{/if}
-				<tr
-					><td>{$t('common.itemnames')}</td><td>{$accountContractDrops.toLocaleString()} bytes</td
-					></tr
-				>
+				<tr><td>{$t('common.itemnames')}</td><td>{$accountContractDrops.toLocaleString()}</td></tr>
 			</tbody>
 			{#if $accountContractRam > 0}
 				<thead>
