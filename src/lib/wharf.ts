@@ -19,7 +19,8 @@ import { WalletPluginWombat } from '@wharfkit/wallet-plugin-wombat';
 import WebRenderer from '@wharfkit/web-renderer';
 
 import { derived, writable, type Readable, type Writable, get } from 'svelte/store';
-import { PUBLIC_CHAIN_NAME, PUBLIC_LOCAL_SIGNER } from '$env/static/public';
+
+import { PUBLIC_CHAIN_NAME, PUBLIC_LOCAL_SIGNER, PUBLIC_DROPLETS_API } from '$env/static/public';
 
 import { Contract as SystemContract } from './contracts/eosio';
 export * as SystemContract from './contracts/drops';
@@ -38,6 +39,8 @@ export const chain = Chains[PUBLIC_CHAIN_NAME];
 if (!chain) {
 	throw new Error(`Unknown chain: ${PUBLIC_CHAIN_NAME}`);
 }
+
+export const dropletsAPI = PUBLIC_DROPLETS_API;
 
 const walletPlugins = [
 	new WalletPluginAnchor(),
