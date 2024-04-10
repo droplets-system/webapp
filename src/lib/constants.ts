@@ -11,7 +11,7 @@ export const maximumBatchSize = 5000;
 // export const maximumBatchSize = 9007199254740991;
 
 // The actions considered safe enough for a Session Key
-export const safeActions = ['bind', 'claim', 'generate', 'open', 'unbind'];
+export const safeActions = ['bind', 'claim', 'generate', 'open', 'unbind', 'destroy'];
 
 // Extra amount of RAM to purchase on all buyram/buyrambytes transactions
 export const ramPurchaseBuffer = 5;
