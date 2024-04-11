@@ -3,6 +3,7 @@
 		Asset,
 		Bytes,
 		Checksum256,
+		Int64,
 		Serializer,
 		type TransactResult,
 		type TransactResultReturnValue
@@ -97,14 +98,7 @@
 		const bound = $createBound;
 
 		// Specify the RAM required for this transaction and the RAM total
-		let ramRequired = amount * sizeDropRow;
-		let ramRequiredTotal = totalAmount * sizeDropRow;
-
-		// If RAM purchase is required, use the purchase size
-		if ($accountContractRam < ramRequired) {
-			ramRequired = amount * sizeDropRowPurchase;
-			ramRequiredTotal = totalAmount * sizeDropRowPurchase;
-		}
+		const ramRequired = amount * sizeDropRow;
 
 		if ($session) {
 			const actions = [
@@ -116,14 +110,10 @@
 				})
 			];
 
-			const requiresRAMPurchase = $createBound && $accountRamBalance < ramRequired;
-			let ramPurchaseAmount = 0; // The bytes purchased in tx, will update account record on success
-			if (requiresRAMPurchase) {
+			if (!$accountContractBalance) {
 				actions.unshift(
-					systemContract.action('buyrambytes', {
-						payer: $session.actor,
-						receiver: $session.actor,
-						bytes: $accountRamPurchaseAmount
+					dropsContract.action('open', {
+						owner: $session.actor
 					})
 				);
 			}
@@ -131,19 +121,23 @@
 			const requiresDeposit = !$createBound && $accountContractRam < ramRequired;
 			if (requiresDeposit) {
 				actions.unshift(
-					tokenContract.action('transfer', {
+					systemContract.action('ramtransfer', {
 						from: $session.actor,
 						to: 'drops',
-						quantity: Asset.fromUnits($accountRamDepositAmount, '4,EOS'),
+						bytes: ramRequired,
 						memo: String($session.actor)
 					})
 				);
 			}
 
-			if (!$accountContractBalance) {
+			const requiresRAMPurchase = $accountRamBalance < ramRequired;
+			let ramPurchaseAmount = 0; // The bytes purchased in tx, will update account record on success
+			if (requiresRAMPurchase) {
 				actions.unshift(
-					dropsContract.action('open', {
-						owner: $session.actor
+					systemContract.action('buyrambytes', {
+						payer: $session.actor,
+						receiver: $session.actor,
+						bytes: $accountRamPurchaseAmount
 					})
 				);
 			}

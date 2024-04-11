@@ -29,6 +29,7 @@
 				<tr><td>contractRamPurchaseAmount</td><td>{$contractRamPurchaseAmount}</td></tr>
 				<tr><td>contractRamPurchasePrice</td><td>{$contractRamPurchasePrice}</td></tr>
 				<tr><td>accountRamPurchaseAmount</td><td>{$accountRamPurchaseAmount}</td></tr>
+				<tr><td>accountRamTransferAmount</td><td>{$accountRamPurchaseAmount}</td></tr>
 				<tr><td>accountRamPurchasePrice</td><td>{$accountRamPurchasePrice}</td></tr>
 				<tr><td>requiresDeposit</td><td>{$requiresDeposit}</td></tr>
 				<tr><td>canGenerate</td><td>{$canGenerate}</td></tr>

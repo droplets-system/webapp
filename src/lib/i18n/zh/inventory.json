@@ -19,6 +19,7 @@
 	"rambalanceuse": "要使用的 RAM 合约中余额",
 	"ramtobuy": "RAM购买成本",
 	"ramtorelease": "您将被释放的 RAM",
+	"ramtotransfer": "RAM that will be transferred",
 	"ramtouse": "您将被使用的内存",
 	"ramused": "内存使用量",
 	"signinfirst": "您必须登录才能查看您的 {{itemnames}}。",

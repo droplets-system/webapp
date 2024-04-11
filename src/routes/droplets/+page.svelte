@@ -2,7 +2,7 @@
 	import { writable, type Writable } from 'svelte/store';
 	import { AlertCircle, Combine, Lock, PackageX, Unlock } from 'svelte-lucide';
 	import { Serializer, UInt64 } from '@wharfkit/session';
-	import { TabGroup, Tab } from '@skeletonlabs/skeleton';
+	import { TabGroup, Tab, type PaginationSettings } from '@skeletonlabs/skeleton';
 
 	import { t } from '$lib/i18n';
 	import MyItems from '$lib/components/headers/myitems.svelte';
@@ -14,6 +14,7 @@
 
 	import { DropsContract, session, dropsContract } from '$lib/wharf';
 	import type { TableRowCursor } from '@wharfkit/contract';
+	import { loadDroplets } from '$lib/api';
 
 	const loaded = writable(false);
 	const selected: Writable<Record<string, boolean>> = writable({});
@@ -21,58 +22,93 @@
 
 	const drops: Writable<DropsContract.Types.drop_row[]> = writable([]);
 	const dropsLoaded = writable(0);
-	const dropsProcessed = writable(0);
-
 	const dropsFound = writable(0);
-	const dropsClaimed = writable(0);
+
+	const page = writable(0);
+	const limit = writable(10);
+
+	const paginationSettings = {
+		page: 0,
+		limit: 10,
+		size: 20,
+		amounts: [10, 25, 100, 500, 1000, 2500]
+	} satisfies PaginationSettings;
+
+	$: paginationSettings.size = $dropsFound;
+
+	function onPageChange(e: CustomEvent): void {
+		page.set(e.detail);
+		loaddrops();
+	}
+
+	function onAmountChange(e: CustomEvent): void {
+		limit.set(e.detail);
+		loaddrops();
+	}
+
+	// $: paginatedSource = $filteredDrops.slice(
+	// 	paginationSettings.page * paginationSettings.limit,
+	// 	paginationSettings.page * paginationSettings.limit + paginationSettings.limit
+	// );
 
 	session.subscribe(() => loaddrops());
 
 	async function loaddrops() {
 		if ($session) {
 			loaded.set(false);
-
-			// Reset all state
-			dropsLoaded.set(0);
-			dropsProcessed.set(0);
-			dropsFound.set(0);
-			dropsClaimed.set(0);
-			drops.set([]);
-
-			const from = Serializer.decode({
-				data:
-					Serializer.encode({ object: UInt64.from(UInt64.min) }).hexString +
-					Serializer.encode({ object: $session.actor }).hexString,
-				type: 'uint128'
-			});
-
-			const to = Serializer.decode({
-				data:
-					Serializer.encode({ object: UInt64.from(UInt64.max) }).hexString +
-					Serializer.encode({ object: $session.actor }).hexString,
-				type: 'uint128'
-			});
-
-			const cursor: TableRowCursor = await dropsContract.table('drop').query({
-				key_type: 'i128',
-				index_position: 'secondary',
-				rowsPerAPIRequest: 10000,
-				from,
-				to
-			});
-
-			const accumulator: DropsContract.Types.drop_row[] = [];
-			while (!cursor.endReached) {
-				const rows = await cursor.next();
-				accumulator.push(...rows);
-				dropsLoaded.set(accumulator.length);
-			}
-
-			dropsFound.set(accumulator.length);
+			const skip = $page * $limit;
+			const result = await loadDroplets($session.actor, skip, $limit);
+			drops.set(result.droplets);
+			dropsFound.set(result.total);
+			dropsLoaded.set(result.droplets.length);
 			loaded.set(true);
-			drops.set(accumulator);
 		}
 	}
+	// async function loaddrops() {
+	// 	if ($session) {
+	// 		loaded.set(false);
+
+	// 		// Reset all state
+	// 		dropsLoaded.set(0);
+	// 		dropsProcessed.set(0);
+	// 		dropsFound.set(0);
+	// 		dropsClaimed.set(0);
+	// 		drops.set([]);
+
+	// 		const from = Serializer.decode({
+	// 			data:
+	// 				Serializer.encode({ object: UInt64.from(UInt64.min) }).hexString +
+	// 				Serializer.encode({ object: $session.actor }).hexString,
+	// 			type: 'uint128'
+	// 		});
+
+	// 		const to = Serializer.decode({
+	// 			data:
+	// 				Serializer.encode({ object: UInt64.from(UInt64.max) }).hexString +
+	// 				Serializer.encode({ object: $session.actor }).hexString,
+	// 			type: 'uint128'
+	// 		});
+
+	// 		const cursor: TableRowCursor = await dropsContract.table('drop').query({
+	// 			key_type: 'i128',
+	// 			index_position: 'secondary',
+	// 			rowsPerAPIRequest: 10000,
+	// 			from,
+	// 			to
+	// 		});
+
+	// 		const accumulator: DropsContract.Types.drop_row[] = [];
+	// 		while (!cursor.endReached) {
+	// 			const rows = await cursor.next();
+	// 			accumulator.push(...rows);
+	// 			dropsLoaded.set(accumulator.length);
+	// 		}
+
+	// 		dropsFound.set(accumulator.length);
+	// 		loaded.set(true);
+	// 		drops.set(accumulator);
+	// 	}
+	// }
 
 	function resetSelected() {
 		selected.set({});
@@ -143,30 +179,17 @@
 							<div class="alert-actions"></div>
 						</aside>
 					</div>
-				{:else if !$loaded}
-					<section class="card w-full p-12">
-						<div class="p-4 space-y-4">
-							<div class="text-center h2">{$t('common.loading')}</div>
-							<div class="text-center h3">
-								{$dropsLoaded}
-								{$t('common.itemnames')}...
-							</div>
-							<div class="grid grid-cols-3 gap-8">
-								<div class="placeholder animate-pulse" />
-								<div class="placeholder animate-pulse" />
-								<div class="placeholder animate-pulse" />
-							</div>
-							<div class="grid grid-cols-4 gap-4">
-								<div class="placeholder animate-pulse" />
-								<div class="placeholder animate-pulse" />
-								<div class="placeholder animate-pulse" />
-								<div class="placeholder animate-pulse" />
-							</div>
-						</div>
-					</section>
 				{:else if $drops.length}
 					<div class="space-y-8">
-						<DropsTable {drops} {selected} {selectingAll} />
+						<DropsTable
+							{drops}
+							{loaded}
+							{onAmountChange}
+							{onPageChange}
+							{paginationSettings}
+							{selected}
+							{selectingAll}
+						/>
 					</div>
 				{:else}
 					<div class="p-4 space-y-4">

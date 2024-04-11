@@ -58,7 +58,7 @@
 			const actions = [
 				dropsContract.action('destroy', {
 					owner: $session?.actor,
-					drops_ids: Object.keys($selected),
+					droplet_ids: Object.keys($selected),
 					memo: ''
 				})
 			];

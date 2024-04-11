@@ -19,6 +19,7 @@
 	"rambalanceuse": "사용할 RAM 컨트랙트 잔액",
 	"ramtobuy": "RAM 구매 비용",
 	"ramtorelease": "릴리스 될 귀하의 RAM",
+	"ramtotransfer": "RAM that will be transferred",
 	"ramtouse": "사용 될 귀하의 RAM",
 	"ramused": "사용된 RAM",
 	"signinfirst": "{{itemnames}} 을(를) 보려면 로그인해야 합니다.",

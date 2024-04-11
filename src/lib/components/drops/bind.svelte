@@ -65,7 +65,7 @@
 			const actions = [
 				dropsContract.action('bind', {
 					owner: $session?.actor,
-					drops_ids: Object.keys($selected)
+					droplet_ids: Object.keys($selected)
 				})
 			];
 

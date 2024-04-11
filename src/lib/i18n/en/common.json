@@ -34,9 +34,15 @@
 	"myaccount": "My Account",
 	"myitemnames": "My Droplets",
 	"net": "NET",
+	"new": "new",
 	"number": "Number",
 	"ramkb": "RAM (kb)",
 	"search": "Search",
+	"selfdestruct": {
+		"button": "Self Destruct and destroy all {{itemnames}}",
+		"title": "Self Destruct",
+		"description": "This action will batch destroy all of the {{itemnames}} this account owns, refunding all RAM."
+	},
 	"sessionkey": "Session Key",
 	"sessionkeyadd": "Enable Session Key",
 	"sessionkeydisabled": "Add a Session Key to this device to perform select low security actions.",
