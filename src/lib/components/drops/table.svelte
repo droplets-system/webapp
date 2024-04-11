@@ -10,16 +10,14 @@
 	export let drops: Writable<DropsContract.Types.drop_row[]>;
 	export let selected: Writable<Record<string, boolean>> = writable({});
 	export let selectingAll: Writable<boolean>;
-
-	let paginationSettings = {
-		page: 0,
-		limit: 10,
-		size: 20,
-		amounts: [10, 25, 100, 500, 1000, 2500]
-	} satisfies PaginationSettings;
+	export let paginationSettings: PaginationSettings;
+	export let loaded: Writable<boolean>;
+	export let onPageChange: (e: CustomEvent) => void;
+	export let onAmountChange: (e: CustomEvent) => void;
 
 	const searchingFor: Writable<string> = writable();
 	const filteredDrops = derived([drops, searchingFor], ([$drops, $searchingFor]) => {
+		return $drops;
 		return $drops.filter((row) => {
 			if ($searchingFor) {
 				const matchesInt = String(row.seed).includes($searchingFor);
@@ -29,13 +27,6 @@
 			return true;
 		});
 	});
-
-	$: paginationSettings.size = $filteredDrops.length;
-
-	$: paginatedSource = $filteredDrops.slice(
-		paginationSettings.page * paginationSettings.limit,
-		paginationSettings.page * paginationSettings.limit + paginationSettings.limit
-	);
 
 	function selectDrop(e: Event) {
 		if (e.target) {
@@ -60,7 +51,7 @@
 			if (checked) {
 				selectingAll.set(true);
 				selected.update((current) => {
-					paginatedSource.forEach((s) => (current[String(s.seed)] = true));
+					$filteredDrops.forEach((s) => (current[String(s.seed)] = true));
 					return current;
 				});
 			} else {
@@ -79,6 +70,8 @@
 					<Paginator
 						active="bg-blue-300"
 						bind:settings={paginationSettings}
+						on:page={onPageChange}
+						on:amount={onAmountChange}
 						showFirstLastButtons={false}
 						showPreviousNextButtons={true}
 						showNumerals
@@ -86,7 +79,7 @@
 					/>
 				</th>
 			</tr>
-			<tr>
+			<!-- <tr>
 				<td class="p-4" colspan="4">
 					<label class="label">
 						<input
@@ -97,7 +90,7 @@
 						/>
 					</label>
 				</td>
-			</tr>
+			</tr> -->
 			<tr>
 				<th class="text-center table-cell-fit">
 					<input type="checkbox" checked={$selectingAll} on:change={selectAll} />
@@ -107,31 +100,39 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each paginatedSource as drop}
+			{#if $loaded}
+				{#each $filteredDrops as drop}
+					<tr>
+						<td class="text-center">
+							{#if $selectingAll}
+								<input checked type="checkbox" disabled />
+							{:else}
+								<input
+									checked={$selected[String(drop.seed)]}
+									type="checkbox"
+									on:change={selectDrop}
+									value={drop.seed}
+								/>
+							{/if}
+						</td>
+						<td>
+							<p class="text-lg font-mono">{Bytes.from(drop.seed.byteArray)}</p>
+							<p class="text-xs font-mono">{drop.created}</p>
+						</td>
+						<td class="flex justify-center items-center">
+							{#if drop.bound}
+								<Lock />
+							{/if}
+						</td>
+					</tr>
+				{/each}
+			{:else}
 				<tr>
-					<td class="text-center">
-						{#if $selectingAll}
-							<input checked type="checkbox" disabled />
-						{:else}
-							<input
-								checked={$selected[String(drop.seed)]}
-								type="checkbox"
-								on:change={selectDrop}
-								value={drop.seed}
-							/>
-						{/if}
-					</td>
-					<td>
-						<p class="text-lg font-mono">{Bytes.from(drop.seed.byteArray)}</p>
-						<p class="text-xs font-mono">{drop.created}</p>
-					</td>
-					<td class="flex justify-center items-center">
-						{#if drop.bound}
-							<Lock />
-						{/if}
+					<td colspan="10">
+						<div class="text-center h2">{$t('common.loading')}</div>
 					</td>
 				</tr>
-			{/each}
+			{/if}
 		</tbody>
 		<tfoot class="p-12">
 			<tr>
@@ -139,6 +140,8 @@
 					<Paginator
 						active="bg-blue-300"
 						bind:settings={paginationSettings}
+						on:page={onPageChange}
+						on:amount={onAmountChange}
 						showFirstLastButtons={false}
 						showPreviousNextButtons={true}
 						showNumerals
