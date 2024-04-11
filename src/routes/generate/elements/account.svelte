@@ -53,12 +53,16 @@
 			</thead>
 			<tbody>
 				<tr><td>EOS</td><td>{$accountTokenBalance}</td></tr>
-				{#if $accountRamBalance}
-					<tr>
-						<td>RAM {$t('common.bytes')}</td>
-						<td>{$accountRamBalance.toLocaleString()}</td>
-					</tr>
-				{/if}
+				<tr>
+					<td>RAM {$t('common.bytes')}</td>
+					<td>
+						{#if $accountRamBalance}
+							{$accountRamBalance.toLocaleString()}
+						{:else}
+							0
+						{/if}
+					</td>
+				</tr>
 				<tr><td>{$t('common.itemnames')}</td><td>{$accountContractDrops.toLocaleString()}</td></tr>
 			</tbody>
 			{#if $accountContractRam > 0}
