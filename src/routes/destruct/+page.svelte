@@ -149,13 +149,12 @@
 			const actions = [
 				dropsContract.action('destroy', {
 					owner: $session.actor,
-					drops_ids: droplet_ids
+					droplet_ids
 				})
 			];
 
 			let result: TransactResult;
 			try {
-				// console.log('destroying', JSON.stringify(droplet_ids[0]));
 				if ($sessionKey) {
 					result = await $session.localTransact({ actions });
 				} else {
@@ -168,7 +167,7 @@
 				lastResultId.set(undefined);
 				lastResultError.set(String(e));
 				resetDropsState();
-				loadDroplets();
+				// loadDroplets();
 			}
 		}
 	}
