@@ -61,7 +61,7 @@
 			value={$dropsAmount}
 			disabled={$transacting}
 		>
-			{#each [1, 10, 100, 1000, 5000, 'X'] as amount}
+			{#each [1, 10, 100, 1000, 2500, 'X'] as amount}
 				<option value={amount}>+ {amount.toLocaleString()} {$t('common.itemnames')}</option>
 			{/each}
 		</select>

@@ -98,9 +98,12 @@ export const accountBalanceToUse: Readable<number> = derived(
 );
 
 export const accountRamPurchaseAmount: Readable<number> = derived(
-	[accountBalanceToUse, contractBalanceToUse, totalRamRequired],
-	([$accountBalanceToUse, $contractBalanceToUse, $totalRamRequired]) => {
-		const amount = $totalRamRequired - $contractBalanceToUse - $accountBalanceToUse;
+	[accountBalanceToUse, contractBalanceToUse, totalRamRequired, createBound],
+	([$accountBalanceToUse, $contractBalanceToUse, $totalRamRequired, $createBound]) => {
+		let amount = $totalRamRequired - $accountBalanceToUse;
+		if (!$createBound) {
+			amount -= $contractBalanceToUse;
+		}
 		if (amount > 0) {
 			return amount + ramPurchaseBuffer;
 		}

@@ -1,9 +1,7 @@
 <script lang="ts">
 	import {
-		Asset,
 		Bytes,
 		Checksum256,
-		Int64,
 		Serializer,
 		type TransactResult,
 		type TransactResultReturnValue
@@ -22,11 +20,10 @@
 		loadAccountData,
 		session,
 		sessionKey,
-		systemContract,
-		tokenContract
+		systemContract
 	} from '$lib/wharf';
 	import { loadRamPrice } from '$lib/bancor';
-	import { maximumBatchSize, sizeDropRow, sizeDropRowPurchase } from '$lib/constants';
+	import { maximumBatchSize, sizeDropRow } from '$lib/constants';
 	import {
 		lastResultError,
 		transacting,
@@ -38,7 +35,7 @@
 		createBound,
 		randomName,
 		accountRamPurchaseAmount,
-		accountRamDepositAmount,
+		accountRamTransferAmount,
 		actionRequiresSessionKey
 	} from './generate';
 
@@ -65,6 +62,7 @@
 		const amount = $derivedDropsAmount;
 
 		const batches = Math.ceil(amount / maxPerTransaction);
+		let first = true;
 		if (batches > 1) {
 			const batchSizes = Array.from({ length: batches }, (_, idx) =>
 				idx === batches - 1 && amount % maxPerTransaction > 0
@@ -73,7 +71,8 @@
 			);
 			transactBatchSize.set(batchSizes.length);
 			for (const batchSize of batchSizes) {
-				await mint(batchSize, amount);
+				await mint(batchSize, amount, first);
+				first = false;
 				if ($lastResultError) {
 					break;
 				}
@@ -93,12 +92,18 @@
 		transacting.set(false);
 	}
 
-	async function mint(amount: number, totalAmount: number) {
+	async function mint(amount: number, totalAmount: number, first: boolean = false) {
 		const hash = String(Checksum256.hash(Bytes.from(randomName(), 'utf8')));
 		const bound = $createBound;
 
-		// Specify the RAM required for this transaction and the RAM total
-		const ramRequired = amount * sizeDropRow;
+		// Calculate RAM required for all transactions
+		let totalRamRequired = totalAmount * sizeDropRow;
+
+		// Specify the RAM required for this transaction
+		let ramRequired = amount * sizeDropRow;
+		if (!bound) {
+			ramRequired -= Number($accountContractBalance.ram_bytes);
+		}
 
 		if ($session) {
 			const actions = [
@@ -118,28 +123,28 @@
 				);
 			}
 
-			const requiresDeposit = !$createBound && $accountContractRam < ramRequired;
-			if (requiresDeposit) {
-				actions.unshift(
-					systemContract.action('ramtransfer', {
-						from: $session.actor,
-						to: 'drops',
-						bytes: ramRequired,
-						memo: String($session.actor)
-					})
-				);
-			}
+			if (first) {
+				const requiresDeposit = !$createBound && $accountContractRam < totalRamRequired;
+				if (requiresDeposit) {
+					actions.unshift(
+						systemContract.action('ramtransfer', {
+							from: $session.actor,
+							to: 'drops',
+							bytes: $accountRamTransferAmount,
+							memo: String($session.actor)
+						})
+					);
+				}
 
-			const requiresRAMPurchase = $accountRamBalance < ramRequired;
-			let ramPurchaseAmount = 0; // The bytes purchased in tx, will update account record on success
-			if (requiresRAMPurchase) {
-				actions.unshift(
-					systemContract.action('buyrambytes', {
-						payer: $session.actor,
-						receiver: $session.actor,
-						bytes: $accountRamPurchaseAmount
-					})
-				);
+				if ($accountRamPurchaseAmount > 0) {
+					actions.unshift(
+						systemContract.action('buyrambytes', {
+							payer: $session.actor,
+							receiver: $session.actor,
+							bytes: $accountRamPurchaseAmount
+						})
+					);
+				}
 			}
 
 			let result: TransactResult;
@@ -149,15 +154,12 @@
 				} else {
 					result = await $session.transact({ actions });
 				}
-				// result = await $session.transact({ actions });
-
 				// Set the last successful transaction ID
 				lastResultId.set(String(result.resolved?.transaction.id));
-
 				// Process return values
 				result.returns
 					.filter((r) => r.action.equals('generate'))
-					.forEach((v) => processReturn(v, bound, amount, ramPurchaseAmount));
+					.forEach((v) => processReturn(v, bound, amount, $accountRamPurchaseAmount));
 			} catch (e) {
 				lastResult.set(undefined);
 				lastResultId.set(undefined);
