@@ -4,7 +4,7 @@
 	import { Serializer, UInt64 } from '@wharfkit/session';
 	import { TabGroup, Tab, type PaginationSettings } from '@skeletonlabs/skeleton';
 
-	import { t } from '$lib/i18n';
+	import { loading, t } from '$lib/i18n';
 	import MyItems from '$lib/components/headers/myitems.svelte';
 	import DropsTable from '$lib/components/drops/table.svelte';
 	import DropUnbind from '$lib/components/drops/unbind.svelte';
@@ -46,12 +46,13 @@
 		loaddrops();
 	}
 
-	// $: paginatedSource = $filteredDrops.slice(
-	// 	paginationSettings.page * paginationSettings.limit,
-	// 	paginationSettings.page * paginationSettings.limit + paginationSettings.limit
-	// );
-
 	session.subscribe(() => loaddrops());
+	drops.subscribe(() => {
+		loaded.set(false);
+		if ($drops.length === 0) {
+			setTimeout(() => loaddrops(), 1000);
+		}
+	});
 
 	async function loaddrops() {
 		if ($session) {
