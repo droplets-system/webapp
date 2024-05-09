@@ -54,7 +54,11 @@ if (PUBLIC_LOCAL_SIGNER) {
 	walletPlugins.unshift(new WalletPluginPrivateKey(PUBLIC_LOCAL_SIGNER));
 }
 
-export const client = new APIClient({ url: chain.url });
+const urlParams = new URLSearchParams(window.location.search);
+export const apiUrl: string = urlParams.get('url') ? urlParams.get('url') : chain.url;
+chain.url = apiUrl;
+
+export const client = new APIClient({ url: apiUrl });
 export const accountKit = new AccountKit(chain, { client });
 export const contractKit = new ContractKit({
 	client
