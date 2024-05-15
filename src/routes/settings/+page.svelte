@@ -3,6 +3,7 @@
 	import {
 		account,
 		accountContractRam,
+		apiUrl,
 		dropsContract,
 		loadAccountBalances,
 		loadAccountData,
@@ -57,6 +58,12 @@
 		}
 	);
 
+	function changeApi(e: SubmitEvent) {
+		const data = new FormData(e.target as HTMLFormElement);
+		localStorage.setItem('apiUrl', data.get('api') as string);
+		location.reload();
+	}
+
 	modalStore.subscribe((value) => {
 		setTimeout(loadAccountData, 1000);
 	});
@@ -72,6 +79,28 @@
 			>
 		</div>
 		<div class="p-6 space-y-8">
+			<div class="h3">
+				{$t('common.api', {
+					default: 'API'
+				})}
+			</div>
+			<p>
+				{$t('common.apidesc', {
+					default: 'Change the API that you are connected to.'
+				})}
+			</p>
+			<form on:submit|preventDefault={changeApi}>
+				<div class="flex flex-col space-y-2">
+					<label for="api" class="text-sm">API</label>
+					<input type="text" name="api" class="input" value={apiUrl} />
+				</div>
+				<button class="btn bg-blue-400" type="submit"
+					>{$t('common.save', {
+						default: 'Save'
+					})}</button
+				>
+			</form>
+
 			{#if $session}
 				<div class="h3">{$t('common.sessionkey')}</div>
 				{#if $hasSessionKey}
