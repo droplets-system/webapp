@@ -5,7 +5,7 @@ export const sizeAccountRow = 124;
 export const sizeStatRow = 412;
 
 // The maximum number of Drops to generate in a single transaction
-export const maximumBatchSize = 2500;
+export const maximumBatchSize = 1000;
 
 // max safe integer for debugging
 // export const maximumBatchSize = 9007199254740991;
