@@ -39,7 +39,7 @@
 	"ramkb": "RAM (kb)",
 	"search": "Search",
 	"selfdestruct": {
-		"button": "Self Destruct and destroy all {{itemnames}}",
+		"button": "Self Destruct and destroy {{count}} {{itemnames}}",
 		"title": "Self Destruct",
 		"description": "This action will batch destroy all of the {{itemnames}} this account owns, refunding all RAM."
 	},

@@ -42,13 +42,11 @@
 	// Whether the Drops are being loaded
 	const loading = writable(false);
 
-	const droplets: Writable<UInt64[]> = writable([]);
+	const ownedDrops = writable(0);
+	const limit = writable(Number.MAX_SAFE_INTEGER);
+	const limitSet = writable(false);
 
-	setInterval(() => {
-		if ($droplets.length === 0) {
-			loadDroplets();
-		}
-	}, 2000);
+	const droplets: Writable<UInt64[]> = writable([]);
 
 	const processed = writable(0);
 
@@ -61,8 +59,7 @@
 		if ($session && !$loading) {
 			loading.set(true);
 			await fetch(
-				dropletsAPI +
-					`/get/droplets?account=${$session.actor}&skip=${skip}&limit=${maxPerTransaction}`
+				dropletsAPI + `/get/droplets?account=${$session.actor}&skip=${skip}&limit=${toLoad}`
 			)
 				.then((res) => res.json())
 				.then(async (data) => {
@@ -74,7 +71,11 @@
 					dropsTotal.set(data.total);
 					if ($dropsTotal > 0 && $droplets.length < $dropsTotal) {
 						loading.set(false);
-						await loadDroplets($droplets.length);
+						if ($droplets.length === $ownedDrops || $droplets.length >= $limit) {
+							loaded.set(true);
+						} else {
+							await loadDroplets($droplets.length);
+						}
 					} else {
 						loaded.set(true);
 						loading.set(false);
@@ -82,6 +83,25 @@
 				});
 		}
 	}
+
+	async function loadTotal() {
+		if ($session) {
+			const balance = await dropsContract
+				.table('balances')
+				.get(String($session.actor), { scope: 'drops' });
+			ownedDrops.set(Number(balance?.drops) || 0);
+			limit.set(Number(balance?.drops) || 0);
+		}
+	}
+
+	setInterval(() => {
+		if (!$ownedDrops) {
+			loadTotal();
+		}
+		if ($droplets.length === 0 && $limitSet) {
+			loadDroplets();
+		}
+	}, 2000);
 
 	function resetDropsState() {
 		droplets.set([]);
@@ -92,12 +112,13 @@
 
 	session.subscribe(() => {
 		resetDropsState();
-		loadDroplets();
+		// loadDroplets();
 	});
 
 	onMount(() => {
-		loadDroplets();
+		// loadDroplets();
 		loadEpoch();
+		loadTotal();
 	});
 
 	onDestroy(() => {
@@ -113,7 +134,7 @@
 		transactBatchProgress.set(0);
 
 		const amount = $dropsTotal;
-		const batches = Math.ceil(amount / maxPerTransaction);
+		const batches = Math.ceil($limit / maxPerTransaction);
 		if (batches > 1) {
 			const batchSizes = Array.from({ length: batches }, (_, idx) =>
 				idx === batches - 1 && amount % maxPerTransaction > 0
@@ -182,9 +203,20 @@
 		<p class="px-2 sm:px-6">
 			{$t('common.selfdestruct.description', { itemnames: $t('common.itemnames') })}
 		</p>
-		{#if $loading || !$loaded}
-			<p>Loading Droplets: {$droplets.length}/{$dropsTotal}</p>
-			<ProgressBar value={$droplets.length} max={$dropsTotal} />
+		{#if $limit === Number.MAX_SAFE_INTEGER}
+			<p>Loading...</p>
+		{:else if $limitSet === false}
+			<p>
+				{$t('common.selfdestruct.total', {
+					itemnames: $t('common.itemnames'),
+					default: 'Enter the maximum amount to destroy:'
+				})}
+			</p>
+			<input class="input" type="text" bind:value={$limit} />
+			<button class="btn bg-red-400" on:click={() => limitSet.set(true)}>Load Droplets</button>
+		{:else if $loading || !$loaded}
+			<p>Loading Droplets: {$droplets.length}/{$limit}</p>
+			<ProgressBar value={$droplets.length} max={$limit} />
 		{:else if $dropsTotal === 0}
 			<p>You have no Droplets to destroy.</p>
 		{:else}
@@ -193,7 +225,10 @@
 				<ProgressBar value={$transactBatchProgress} max={$transactBatchSize} />
 			{/if}
 			<button class="btn bg-red-400" on:click={selfDestruct} disabled={!$loaded || $transacting}
-				>{$t('common.selfdestruct.button', { itemnames: $t('common.itemnames') })}</button
+				>{$t('common.selfdestruct.button', {
+					itemnames: $t('common.itemnames'),
+					count: $droplets.length
+				})}</button
 			>
 			<p>
 				Destroying all of your Droplets will require approximately {($dropsTotal * 10) / 1000} ms of
