@@ -58,6 +58,7 @@
 	async function loadDroplets(skip = 0) {
 		if ($session && !$loading) {
 			loading.set(true);
+			const toLoad = Math.min(maxPerTransaction, $limit);
 			await fetch(
 				dropletsAPI + `/get/droplets?account=${$session.actor}&skip=${skip}&limit=${toLoad}`
 			)
